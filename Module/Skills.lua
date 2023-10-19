@@ -9,6 +9,15 @@
 local getArgs = require('Module:Arguments').getArgs
 local getGames = require('Module:Gamedata')
 
+local getArcana = require('Module:Arcana').getArcana
+local getRace = require('Module:Races').getRace
+local cate = require('Module:Categories').cate
+local rarityCategory = require('Module:Categories').rarityCategory
+local aligncat = require('Module:Categories').aligncat
+local alignnocat = require('Module:Categories').alignnocat
+local bossdemonnocat = require('Module:Categories').bossdemonnocat
+local bossdemoncat = require('Module:Categories').bossdemoncat
+
 local p = {}
 
 local function makeInvokeFunction(funcName)
@@ -106,20 +115,6 @@ local function outputResAsPercent(v)
     return styles.statlow3 .. v
 end
 
-local function rarityCategory(rarity, gamen)
-    if string.find(rarity, "★") ~= nil then
-        local rarityNumber = math.floor(#rarity/3)
-
-        if rarityNumber > 0 then
-            return string.format('[[Category:%d★ Demons in %s]]', rarityNumber, gamen)
-        else
-            return ''
-        end
-    else
-        return string.format('[[Category:%s Demons in %s]]', rarity, gamen)
-    end
-end
-
 local function createEquipTable(base)
     local equiptable = {
         ["sword"] = "=",
@@ -146,14 +141,6 @@ local function createEquipTable(base)
     return equiptable
 end
 
-local function cate(catename)
-    if mw.title.getCurrentTitle():inNamespace('') then
-        return '[[Category:' .. catename .. ']]'
-    else
-        return ''
-    end
-end
-
 local function noskill(skill,gamed)
     local result = '\n|-\n!colspan=5 style="background:#300;width:600px"|<strong style="color:red;font-size:150%">'
     if skill and gamed then
@@ -166,285 +153,6 @@ end
 
 local function wikitext(text)
     return mw.getCurrentFrame():preprocess(text)
-end
-
-local race_names = {
---Gods
-    ['Deity'] = { 'Deity', 'Demon God', },
-    ['Megami'] = { 'Megami', 'Goddess', },
-    ['Amatsu'] = { 'Amatsu', 'Heavenly God', 'Tenjin', },
-    ['Enigma'] = { 'Enigma', },
-    ['Entity'] = { 'Entity', 'Geist', },
-    ['Godly'] = { 'Godly', 'Godly Spirit', },
-    ['Soshin'] = { 'Soshin', },
-    ['Chaos'] = { 'Chaos', linkdab=true, },
---Guardians
-    ['Tenma'] = { 'Tenma', },
-    ['Fury'] = { 'Fury', 'Destroyer', 'Omega', linkdab=true, },
-    ['Lady'] = { 'Lady', 'Earth Mother', },
-    ['Kunitsu'] = { 'Kunitsu', 'Nation Ruler', 'Chigi', },
-    ['Kishin'] = { 'Kishin', 'Guardian', },
-    ['Vile'] = { 'Vile', },
-    ['Reaper'] = { 'Reaper', linkdab=true, },
-    ['Shinshou'] = { 'Shinshou', },
-    ['Wargod'] = { 'Wargod', },
-    ['Zealot'] = { 'Zealot', linkdab=true, },
---Aerials
-    ['Herald'] = { 'Herald', 'Seraph', 'Hallel', },
-    ['Divine'] = { 'Divine', },
-    ['Fallen'] = { 'Fallen', 'Fallen Angel', 'Futenshi', },
---Birds
-    ['Avian'] = { 'Avian', },
-    ['Flight'] = { 'Flight', 'Wild Bird', },
-    ['Raptor'] = { 'Raptor', },
---Dragons
-    ['Dragon'] = { 'Dragon', 'Dragon God', },
-    ['Snake'] = { 'Snake', 'Dragon King', },
-    ['Drake'] = { 'Drake', 'Evil Dragon', },
-    ['Hiryu'] = { 'Hiryu', },
---Beasts
-    ['Avatar'] = { 'Avatar', 'Godly Beast', },
-    ['Holy'] = { 'Holy', 'Holy Beast', },
-    ['Beast'] = { 'Beast', linkdab=true, },
-    ['Wilder'] = { 'Wilder', },
-    ['UMA'] = { 'UMA', },
-    ['Kaijuu'] = { 'Kaijuu', },
---Onis
-    ['Touki'] = { 'Touki', },
-    ['Brute'] = { 'Brute', },
-    ['Jirae'] = { 'Jirae', 'Earth Spirit', },
-    ['Femme'] = { 'Femme', 'Joma', },
-    ['Jaki'] = { 'Jaki', 'Evil Demon', },
-    ['Akuma'] = { 'Akuma', },
-    ['Shinoma'] = { 'Shinoma', },
-    ['Henii'] = { 'Henii', catename=false, },
---Magicas
-    ['Tyrant'] = { 'Tyrant', 'Demon Lord', },
-    ['Genma'] = { 'Genma', 'Demigod', },
-    ['Fairy'] = { 'Fairy', },
-    ['Yoma'] = { 'Yoma', },
-    ['Night'] = { 'Night', 'Nocturne', },
-    ['Shin Akuma'] = { 'Shin Akuma', },
---Vegetations
-    ['Tree'] = { 'Tree', },
-    ['Wood'] = { 'Wood', },
-    ['Jusei'] = { 'Jusei', },
---Elementals
-    ['Element'] = { 'Element', 'Prime', linkdab=true, },
-    ['Mitama'] = { 'Mitama', },
---Evil Spirits
-    ['Haunt'] = { 'Haunt', },
-    ['Spirit'] = { 'Spirit', 'Jarei', },
-    ['Undead'] = { 'Undead', 'Grave' },
---Humans
-    ['Human'] = { 'Human', },
-    ['Gaean'] = { 'Gaean', 'Gaian', link='Ring of Gaea', catename='Ring of Gaea', },
-    ['Messian'] = { 'Messian', link='Order of Messiah', catename='Order of Messiah', },
-    ['Summoner'] = { 'Summoner', link='Devil Summoner (race)', },
-    ['Kyojin'] = { 'Kyojin', },
-    ['Shinja'] = { 'Ishtar Shinja', 'Bael Shinja', },
-    ['Meta'] = { 'Meta', },
-    ['Ranger'] = { 'Ranger', },
-    ['Hero'] = { 'Hero', },
-    ['General'] = { 'General', },
-    ['Therian'] = { 'Therian', },
-    ['Foreigner'] = { 'Foreigner', },
-    ['Fiend'] = { 'Fiend', },
---Fouls
-    ['Foul'] = { 'Foul', },
-    ['Vermin'] = { 'Vermin', },
-    ['Demonoid'] = { 'Demonoid', },
-    ['Rumor'] = { 'Rumor', },
-    ['Karma'] = { 'Karma', link='Karma (race)', },
---Machine
-    ['Machine'] = { 'Machine', 'Device' },
-    ['Virus'] = { 'Virus', exclusive='#Virus and Vaccine', },
-    ['Vaccine'] = { 'Vaccine', exclusive='#Virus and Vaccine', },
---Unclassified
-    ['Zoma'] = { 'Zoma', },
-    ['Fake'] = { 'Fake', },
-    ['Famed'] = { 'Famed', },
-    ['Suiyou'] = { 'Suiyou', },
-    ['Nymph'] = { 'Nymph', },
-    ['Food'] = { 'Food', },
---Enemy-exclusive
-    ['Horde'] = { 'Horde', catename=false, },
-    ['Yuiitsukami'] = { 'Yuiitsukami', exclusive='Yuiitsukami / Kami', catename=false, },
-    ['Kami'] = { 'Kami', exclusive='Yuiitsukami / Kami', catename=false, },
-    ['Himitsu'] = { 'Himitsu', exclusive='Himitsu', catename=false, },
-    ['Teacher'] = { 'Teacher', exclusive='Kyoushi and Kaizou Kyoushi', catename=false, },
-    ['Demon God Emperor'] = { 'Demon God Emperor', 'Majinou', 'Majin Ou', 'Majinō', 'Majinnou', 'Majinnō', exclusive='Majinou / Demon God Emperor', catename=false, },
-    ['Boutoko'] = { 'Boutoko', exclusive='Boutoko / Violent Guy', catename=false, },
-    ['Corpus'] = { 'Corpus', link='Manikin', catename=false, },
-    ['Zoa'] = { 'Zoa', exclusive='Bunrei / Zoa', },
-    ['Light'] = { 'Light', exclusive='Mujinkou / Light', catename=false, },
-    ['Devil'] = { 'Devil', exclusive='Daimaou / Devil', catename=false, },
-    ['Archaic'] = { 'Archaic', exclusive='Archaic', catename=false, },
-    ['King'] = { 'King', exclusive='King', catename=false, },
-    ['Koki'] = { 'Koki', exclusive='Koki', catename=false, },
-    ['Great'] = { 'Great', exclusive='Great', catename=false, },
-    ['Awake'] = { 'Awake', exclusive='Awake and Soil', catename=false, },
-    ['Soil'] = { 'Soil', exclusive='Awake and Soil', catename=false, },
-    ['Judge'] = { 'Judge', exclusive='Judge and Pillar', catename=false, },
-    ['Pillar'] = { 'Pillar', exclusive='Judge and Pillar', catename=false, },
-    ['Mother'] = { 'Mother', exclusive='Mother and Empty', catename=false, },
-    ['Empty'] = { 'Empty', exclusive='Mother and Empty', catename=false, },
-    ['Onmyo'] = { 'Onmyo', exclusive='Onmyo', catename=false, },
-    ['God'] = { 'God', exclusive='Bonten / God', catename=false, },
-    ['Bel'] = { 'Bel', link='King of Bel', catename=false, },
-    ['Star'] = { 'Star', link='Septentriones', },
-    ['Energy'] = { 'Energy', exclusive='Jiryuu / Energy', catename=false, },
-    ['King Abaddon'] = { 'King Abaddon', catename=false, },
-    ['Fukoshi'] = { 'Fukoshi', catename=false, },
-    ['Locust'] = { 'Locust', 'Soldier Bug', link='Soldier Bug', catename=false, },
-    ['Tokyogami'] = { 'Tokyogami', exclusive='Tokyogami', catename=false, },
-    ['Rebel God'] = { 'Rebel God', exclusive='Rebel God', catename=false, },
-}
-
-local function getRace(race,game,abbr)
-    local result
-    if not race or race == '' or race == '-' or race == 'Unclassified' or race == 'None' or race == 'none' then result = '-'
-    elseif game == 'ddsaga1' or game == 'ddsaga2' then
-        if race == 'Deity' then result = '[[Gods|' .. race .. ']]'
-        elseif race == 'Evil' or race == 'Icon' then result = '[[Guardians|' .. race .. ']]'
-        elseif race == 'Fiend' or race == 'Nether'  then result = '[[Magica|' .. race .. ']]'
-        elseif race == 'Aerial' then result = '[[Aerials|' .. race .. ']]'
-        elseif race == 'Aerial2' then result = '[[Birds|Aerial]]'
-        elseif race == 'Dragon' then result = '[[Dragons|' .. race .. ']]'
-        elseif race == 'Demon' or race == 'Brute' then result = '[[Demoniacs|' .. race .. ']]'
-        elseif race == 'Beast' then result = '[[Beasts|' .. race .. ']]'
-        elseif race == 'Device' then result = '[[Machine|' .. race .. ']]'
-        elseif race == 'Light' then result = '[[Herald|' .. race .. ']]'
-        else result = race
-        end
-    elseif game == 'raidou1' or game == 'raidou2' then
-        if race == 'Element' then result = '[[Element]]' .. cate('Element Race')
-        elseif race == 'Spirit' then result = '[[Mitama|Spirit]]' .. cate('Mitama Race')
-        elseif race == 'Destroyer' or race == 'King Abaddon' or race == 'Fukoshi' or race == 'Locust' or race == 'Tokyogami' or race == 'Rebel God' then result = '[[Enemy exclusive race#' .. race .. '|' .. race ..']]'
-        elseif race == 'Fiend' then result = '[[Fiend]]' .. cate('Fiend Race')
-        elseif race == 'Pyro' or race == 'Frost' or race == 'Volt' or race == 'Wind' or race == 'Fury' or race == 'Pagan' or race == 'Skill' or race == 'Evil' then result = '[[' .. race .. ' Order|' .. race .. ']]' .. cate(race .. ' Order')
-        else result = race
-        end
-    elseif race == 'Therian' then
-        if game == 'mt1' then result = '[[Yoma|Therian]]' .. cate('Yoma Race')
-        else result = '[[Therian]]' .. cate('Therian Race')
-        end
-    elseif race == 'Ghost' then
-        if game == 'sh' or game == 'smtds' then
-            result = '[[Ghost (race)|Ghost]]' .. cate('Ghost Race')
-        else result = '[[Haunt|Ghost]]' .. cate('Haunt Race')
-        end
-    elseif race == 'Cyber' then
-        if game == 'smt4' then
-            result = '[[Machine|Cyber]]' .. cate('Machine Race')
-        else result = '[[Enemy exclusive race#Denrei / Cyber|Cyber]]'
-        end
-    elseif race == 'Star 2' then
-        result = '[[Triangulum|Star]]' .. cate('Star Race')
-    end
-    for k, v in pairs(race_names) do
-        for _, name in ipairs(v) do
-            if race == name then
-                if abbr then
-                    abbr = '<abbr title="' .. abbr .. '">' .. name .. '</abbr>'
-                else abbr = name
-                end
-                if v.exclusive then
-                    result = '[[Enemy exclusive race#' .. v.exclusive .. '|' .. abbr .. ']]'
-                elseif v.linkdab then
-                    result = '[[' .. k .. ' (race)|' .. abbr .. ']]'
-                elseif v.link then
-                    result = '[[' .. v.link .. '|' .. abbr .. ']]'
-                else
-                    result = '[[' .. k .. '|' .. abbr .. ']]'
-                end
-                if v.catename==false then
-                elseif v.catename then
-                    result = result .. cate(v.catename)
-                else
-                    result = result .. cate(k .. ' Race')
-                end
-            end
-        end
-    end
-    if not result then return race end
-    return result
-end
-
-local function aligncat(align,gamen)
-    local result
-    if align == 'Law' or align == 'Light-Law' or align == 'Neutral-Law' or align == 'Dark-Law' then
-        result = cate('Law Demons in ' .. gamen)
-    elseif align == 'Neutral' or align == 'Light-Neutral' or align == 'Neutral-Neutral' or align == 'Dark-Neutral' then
-        result = cate('Neutral Demons in ' .. gamen)
-    elseif align == 'Chaos' or align == 'Light-Chaos' or align == 'Neutral-Chaos' or align == 'Dark-Chaos' then
-        result = cate('Chaos Demons in ' .. gamen)
-    elseif string.lower(align) == "unknown" then
-        result = cate('Unknown Demons in ' .. gamen)
-    else
-        result = ''
-    end
-    return result
-end
-
-local function alignnocat(align,nocat,gamen)
-    local result
-    if nocat then
-        result = ''
-    elseif align == 'Law' or align == 'Light-Law' or align == 'Neutral-Law' or align == 'Dark-Law' then
-        result = cate('Law Demons in ' .. gamen)
-    elseif align == 'Neutral' or align == 'Light-Neutral' or align == 'Neutral-Neutral' or align == 'Dark-Neutral' then
-        result = cate('Neutral Demons in ' .. gamen)
-    elseif align == 'Chaos' or align == 'Light-Chaos' or align == 'Neutral-Chaos' or align == 'Dark-Chaos' then
-        result = cate('Chaos Demons in ' .. gamen)
-    elseif string.lower(align) == "unknown" then
-        result = cate('UNKNOWN Demons in ' .. gamen)
-    else
-        result = ''
-    end
-    return result
-end
-
-local function bossdemonnocat(boss,nocat,gamen)
-    local result
-    if boss then
-        result = cate(gamen .. ' Bosses')
-    elseif nocat then
-        result = ''
-    else result = cate(gamen .. ' Demons')
-    end
-    return result
-end
-
-local function bossdemoncat(boss,gamen)
-    local result
-    if boss then
-        result = cate(gamen .. ' Bosses')
-    else result = cate(gamen .. ' Demons')
-    end
-    return result
-end
-
-local function getArcana(arcana,game,gamen)
-    local result
-    if not arcana or arcana == '' or arcana == '-' or arcana == 'Unclassified' or arcana == 'None' or arcana == 'none'
-        then result = '-'
-    elseif arcana == 'Coin' or arcana == 'Coins' then result = '[[Suit of Coins|Coin]]' .. cate('Coin Arcana')
-    elseif arcana == 'Pentacle' then result = '[[Suit of Coins|Pentacle]]' .. cate('Coin Arcana')
-    elseif arcana == 'Sword' or arcana == 'Swords' then result = '[[Suit of Swords|Sword]]' .. cate('Sword Arcana')
-    elseif arcana == 'Cup' or arcana == 'Cups' then result = '[[Suit of Cups|Cup]]' .. cate('Cup Arcana')
-    elseif arcana == 'Wand' or arcana == 'Wands' then result = '[[Suit of Wands|Wand]]' .. cate('Wand Arcana')
-    elseif arcana == 'Rod' then result = '[[Suit of Wands|Rod]]' .. cate('Wand Arcana')
-    elseif arcana == 'Rumor' then result = '[[Rumor]] [[List of ' .. gamen .. ' Rumors|*]]' .. cate('Rumor Demon')
-    elseif arcana == 'Taurus' or arcana == 'Aquarius' or arcana == 'Leo' or arcana == 'Scorpio' or arcana == 'Masquerade' then
-        result = '[[Masked Circle|' .. arcana .. ']]' .. cate('Masked Circle')
-    elseif arcana == 'Reich' then result = '[[Last Battalion|' .. arcana .. ']]'
-    elseif arcana == 'Grave' or arcana == 'Zonbie' or arcana == 'Zombie' then result = '[[Undead|' .. arcana .. ']]' .. cate('Undead Race')
-    elseif arcana == 'Human' then result = '[[Human]]' .. cate('Human Race')
-    elseif arcana == 'Machine' then result = '[[Machine]]' .. cate('Machine Race')
-    else result = '[[' .. arcana .. ' Arcana|' .. arcana .. ']]' .. cate(arcana .. ' Arcana')
-    end
-    return result
 end
 
 local function bar(color,stat,ratio,cap,stat2,old,new) -- ratio is the length (in pixel) of each point. Cap times ratio equals max length of the stat bar.
@@ -2393,7 +2101,7 @@ function p._stats(args)
                                 end
                                 if skill.chaineffect then
                                     for index, child in ipairs(skill.chaineffect) do
-                                        skill.effect = skill.effect .. string.format('\n<span style="background:' .. getGames.games[gameg].colorb .. ';border-radius:5px;padding:3px;font-weight:bold;">%s:</span>', child[1]) .. " " .. child[2] .. '\n'	
+                                        skill.effect = skill.effect .. string.format('\n<span style="background:' .. getGames.games[gameg].colorb .. ';border-radius:5px;padding:3px;font-weight:bold;">%s:</span>', child[1]) .. " " .. child[2] .. '\n'   
                                     end
                                 end
                                 if skill.conditional then
@@ -2401,7 +2109,7 @@ function p._stats(args)
                                         skill.effect = skill.effect .. string.format('\n<span style="background:' .. getGames.games[gameg].colorb .. ';border-radius:5px;padding:3px;font-weight:bold;">%s:</span>', child[1]) .. " " .. child[2] .. '\n'
                                         if child.chaineffect then
                                             for index, value in ipairs(child.chaineffect) do
-                                                skill.effect = skill.effect .. string.format('<br><span style="background:' .. getGames.games[gameg].colorb .. ';border-radius:5px;padding:3px;font-weight:bold;">%s:</span>', value[1]) .. " " .. value[2] .. '\n'	
+                                                skill.effect = skill.effect .. string.format('<br><span style="background:' .. getGames.games[gameg].colorb .. ';border-radius:5px;padding:3px;font-weight:bold;">%s:</span>', value[1]) .. " " .. value[2] .. '\n' 
                                             end
                                         end
                                     end
@@ -2843,5 +2551,5 @@ function p._row(args)
 end
 
 return p
---[[Category:Skills modules|!]]
---[[Category:Stat Templates|!]]
+
+-- [[Category:Skills modules|!]]
