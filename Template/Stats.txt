@@ -1,0 +1,2 @@
+<includeonly>{{#invoke:Skills|stats}}</includeonly>
+<noinclude>{{doc}}
