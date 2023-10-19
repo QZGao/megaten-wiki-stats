@@ -86,5 +86,4 @@ end
 
 return cates
 
--- [[Category:Modules]]
 -- [[Category:Skills modules]]
