@@ -3,7 +3,7 @@
 -- page=Module:Property names
 --
 -- Licensed under CC BY-SA 3.0
---
+---
 
 
 local property_names = {

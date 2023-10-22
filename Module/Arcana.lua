@@ -3,7 +3,10 @@
 -- page=Module:Arcana
 --
 -- Licensed under CC BY-SA 3.0
---
+---
+
+
+local cate = require('Module:Categories').cate
 
 
 local arcana = {}

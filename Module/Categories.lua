@@ -3,7 +3,7 @@
 -- page=Module:Categories
 --
 -- Licensed under CC BY-SA 3.0
---
+---
 
 
 local cates = {}
@@ -87,3 +87,4 @@ end
 return cates
 
 -- [[Category:Skills modules]]
+-- [[Category:Modules]]

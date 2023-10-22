@@ -3,7 +3,7 @@
 -- page=Module:Skills
 --
 -- Licensed under CC BY-SA 3.0
---
+---
 
 
 local getArgs = require('Module:Arguments').getArgs
