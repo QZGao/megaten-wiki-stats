@@ -525,6 +525,20 @@ local function get_prop(args)
     return prop
 end
 
+local function hasAnyStatBarValue(prop, statKeys)
+    for _, key in ipairs(statKeys) do
+        local value = prop[key]
+        if value == "i" or tonumber(value) ~= nil then
+            return true
+        end
+    end
+    return false
+end
+
+local function hasFilledValue(value)
+    return value ~= nil and value ~= "-"
+end
+
 p.stats = makeInvokeFunction("_stats")
 
 function p._stats(args)
@@ -553,6 +567,7 @@ function p._stats(args)
     if args.P4G then game = "p4g" end
     if args.P5R then game = "p5r" end
     if args.P5S then game = "p5s" end
+	if args.P5X then game = "p5x" end
     if args.BR or args.RB then game = "desu2rb" end
     if args.DC then game = "20xxdc" end
     if args.TMSFE then game = "tmsfe" end
@@ -595,6 +610,23 @@ function p._stats(args)
     styles.bard2 = styles.bard .. "width=17px|"
     local result = '{|align="center" style="min-width:650px;text-align:center; background: #222; border:2px solid ' .. getGames.games[gameg].colorb .. '; border-radius:10px; font-size:75%; font-family:verdana;"\n|-\n|' .. styles.table2b
     if gameg == "sh2" then result = '{|align="center" style="min-width:650px;text-align:center; background: #222; border:2px solid ' .. getGames.games[gameg].colorbg .. '; border-radius:10px; font-size:75%; font-family:verdana;"\n|-\n|' .. styles.table2b end
+    local pending_top_stats, pending_top_stats_categories
+    local function flushPendingTopStats()
+        if pending_top_stats then
+            result = result .. pending_top_stats .. (pending_top_stats_categories or "")
+            pending_top_stats = nil
+            pending_top_stats_categories = nil
+        end
+    end
+    local function appendTopAffinityTable(affinity_table)
+        if pending_top_stats then
+            result = result .. styles.table2b .. '\n|style="padding:0;width:24%;vertical-align:top"|' .. pending_top_stats .. '\n|style="padding:0;width:76%;vertical-align:top"|' .. affinity_table .. "\n|}" .. (pending_top_stats_categories or "")
+            pending_top_stats = nil
+            pending_top_stats_categories = nil
+        else
+            result = result .. affinity_table
+        end
+    end
     if getGames.games[gameg].statb == nil then
         styles.barc = "orange"
     else
@@ -1229,7 +1261,7 @@ function p._stats(args)
             end
         end
     end
-    if (gameg == "p2is" or gameg == "p2ep" or gameg == "p5" or gameg == "p5r" or gameg == "p5s") and prop.quote then result = result .. styles.table2b .. styles.quote .. 'font-style:italic"|' .. string.gsub(prop.quote, "!!", "‼") .. "\n|}" end -- replace exclamation mark otherwise it will be interpreted as wiki table seperator.
+    if (gameg == "p2is" or gameg == "p2ep" or gameg == "p5" or gameg == "p5r" or gameg == "p5s" or gameg == "p5x") and prop.quote then result = result .. styles.table2b .. styles.quote .. 'font-style:italic"|' .. string.gsub(prop.quote, "!!", "‼") .. "\n|}" end -- replace exclamation mark otherwise it will be interpreted as wiki table seperator.
     if gameg == "p2is" or gameg == "p2ep" then
         result = result .. styles.table2 .. styles.h .. "|[[Arcana|" .. styles.spanc .. "Arcana</span>]]"
         if prop.enemy or prop.boss or prop.hp then
@@ -1254,50 +1286,75 @@ function p._stats(args)
         end
         result = result .. "\n|}"
     end
-    if (gameg == "p3" or gameg == "p3re") or gameg == "p4" or gameg == "p5" or gameg == "p5r" or gameg == "p5s" then
-        result = result .. styles.table2
-        if gameg == "p5" and (prop.arcana == nil or prop.arcana == "" or prop.arcana == "-") then
+    if (gameg == "p3" or gameg == "p3re") or gameg == "p4" or (gameg == "p5" or gameg == "p5r" or gameg == "p5s" or gameg == "p5x") then
+        local has_arcana = not ((gameg == "p5" or gameg == "p5r" or gameg == "p5x") and not hasFilledValue(prop.arcana))
+        local has_stat_bars = hasAnyStatBarValue(prop, { "str", "magic", "vit", "agl", "luc" })
+        local stat_table = styles.table2
+        local stat_categories = ""
+        if has_stat_bars then
+            if has_arcana then
+                stat_table = stat_table .. styles.h .. "|[[Arcana|" .. styles.spanc .. "Arcana</span>]]"
+            end
+            stat_table = stat_table .. styles.h .. 'width="50px"|[[Level (stat)|' .. styles.spanc .. "Level</span>]]"
+            if prop.hp then stat_table = stat_table .. styles.h .. 'width="40px"|HP' end
+            if prop.mp then stat_table = stat_table .. styles.h .. 'width="40px"|SP' end
+            if prop.maxhp then stat_table = stat_table .. styles.h .. 'width="40px"|HP' end
+            if prop.maxmp then stat_table = stat_table .. styles.h .. 'width="40px"|SP' end
+            if gameg == "p5s" and prop.stagger then stat_table = stat_table .. styles.h .. '|[[Stagger Gauge|<span style="color:#fff">Stagger Gauge</span>]]' end
+            if prop.traits then stat_table = stat_table .. styles.h .. '|[[Personality|<span style="color:#fff">Type</span>]]' end
+            stat_table = stat_table .. styles.bart11 .. "324px" .. styles.bart12 .. '0.8"' .. styles.barh .. "|Strength" .. styles.bard2 .. bar(styles.barc, prop.str, 2.4, 99) .. styles.barh .. "|Magic" .. styles.bard2 .. bar(styles.barc, prop.magic, 2.4, 99) .. styles.barh .. "|Endurance" .. styles.bard2 .. bar(styles.barc, prop.vit, 2.4, 99) .. styles.barh .. "|Agility" .. styles.bard2 .. bar(styles.barc, prop.agl, 2.4, 99) .. styles.barh .. "|Luck" .. styles.bard2 .. bar(styles.barc, prop.luc, 2.4, 99) .. "\n|}\n|-"
+            if has_arcana then
+                stat_table = stat_table .. styles.statlow .. getArcana(prop.arcana, gameg, gamegn)
+            end
+            stat_table = stat_table .. styles.statlow .. prop.level
+            if prop.hp then stat_table = stat_table .. styles.statlow .. prop.hp .. '<div style="position:relative;top:-4px;border:2.5px solid ' .. getGames.games[gameg].hp2 .. '"></div>' end
+            if prop.mp then stat_table = stat_table .. styles.statlow .. prop.mp .. '<div style="position:relative;top:-4px;border:2.5px solid ' .. getGames.games[gameg].mp2 .. '"></div>' end
+            if prop.maxhp then stat_table = stat_table .. styles.statlow .. prop.maxhp .. '<div style="position:relative;top:-4px;border:2.5px solid ' .. getGames.games[gameg].hp2 .. '"></div>' end
+            if prop.maxmp then stat_table = stat_table .. styles.statlow .. prop.maxmp .. '<div style="position:relative;top:-4px;border:2.5px solid ' .. getGames.games[gameg].mp2 .. '"></div>' end
+            if gameg == "p5s" and prop.stagger then stat_table = stat_table .. styles.statlow .. prop.stagger end
+            if prop.traits then stat_table = stat_table .. styles.statlow .. prop.traits end
         else
-            result = result .. styles.h .. "|[[Arcana|" .. styles.spanc .. "Arcana</span>]]"
+            if has_arcana then
+                stat_table = stat_table .. styles.h .. "|[[Arcana|" .. styles.spanc .. "Arcana</span>]]"
+            end
+            stat_table = stat_table .. styles.h .. 'width="50px"|[[Level (stat)|' .. styles.spanc .. "Level</span>]]"
+            if prop.hp then stat_table = stat_table .. styles.h .. 'width="40px"|HP' end
+            if prop.mp then stat_table = stat_table .. styles.h .. 'width="40px"|SP' end
+            if prop.maxhp then stat_table = stat_table .. styles.h .. 'width="40px"|HP' end
+            if prop.maxmp then stat_table = stat_table .. styles.h .. 'width="40px"|SP' end
+            if gameg == "p5s" and prop.stagger then stat_table = stat_table .. styles.h .. '|[[Stagger Gauge|<span style="color:#fff">Stagger Gauge</span>]]' end
+            if prop.traits then stat_table = stat_table .. styles.h .. '|[[Personality|<span style="color:#fff">Type</span>]]' end
+            stat_table = stat_table .. "\n|-"
+            if has_arcana then
+                stat_table = stat_table .. styles.statlow .. getArcana(prop.arcana, gameg, gamegn)
+            end
+            stat_table = stat_table .. styles.statlow .. prop.level
+            if prop.hp then stat_table = stat_table .. styles.statlow .. prop.hp .. '<div style="position:relative;top:-4px;border:2.5px solid ' .. getGames.games[gameg].hp2 .. '"></div>' end
+            if prop.mp then stat_table = stat_table .. styles.statlow .. prop.mp .. '<div style="position:relative;top:-4px;border:2.5px solid ' .. getGames.games[gameg].mp2 .. '"></div>' end
+            if prop.maxhp then stat_table = stat_table .. styles.statlow .. prop.maxhp .. '<div style="position:relative;top:-4px;border:2.5px solid ' .. getGames.games[gameg].hp2 .. '"></div>' end
+            if prop.maxmp then stat_table = stat_table .. styles.statlow .. prop.maxmp .. '<div style="position:relative;top:-4px;border:2.5px solid ' .. getGames.games[gameg].mp2 .. '"></div>' end
+            if gameg == "p5s" and prop.stagger then stat_table = stat_table .. styles.statlow .. prop.stagger end
+            if prop.traits then stat_table = stat_table .. styles.statlow .. prop.traits end
         end
-        result = result .. styles.h .. 'width="50px"|[[Level (stat)|' .. styles.spanc .. "Level</span>]]"
-        if prop.hp then result = result .. styles.h .. 'width="40px"|HP' end
-        if prop.mp then result = result .. styles.h .. 'width="40px"|SP' end
-        if prop.maxhp then result = result .. styles.h .. 'width="40px"|HP' end
-        if prop.maxmp then result = result .. styles.h .. 'width="40px"|SP' end
-        if gameg == "p5s" and prop.stagger then result = result .. styles.h .. '|[[Stagger Gauge|<span style="color:#fff">Stagger Gauge</span>]]' end
-        if prop.traits then result = result .. styles.h .. '|[[Personality|<span style="color:#fff">Type</span>]]' end
-        result = result .. styles.bart11 .. "324px" .. styles.bart12 .. '0.8"' .. styles.barh .. "|Strength" .. styles.bard2 .. bar(styles.barc, prop.str, 2.4, 99) .. styles.barh .. "|Magic" .. styles.bard2 .. bar(styles.barc, prop.magic, 2.4, 99) .. styles.barh .. "|Endurance" .. styles.bard2 .. bar(styles.barc, prop.vit, 2.4, 99) .. styles.barh .. "|Agility" .. styles.bard2 .. bar(styles.barc, prop.agl, 2.4, 99) .. styles.barh .. "|Luck" .. styles.bard2 .. bar(styles.barc, prop.luc, 2.4, 99) .. "\n|}\n|-"
-        if gameg == "p5" and (prop.arcana == nil or prop.arcana == "" or prop.arcana == "-") then
-        else
-            result = result .. styles.statlow .. getArcana(prop.arcana, gameg, gamegn)
-        end
-        result = result .. styles.statlow .. prop.level
-        if prop.hp then result = result .. styles.statlow .. prop.hp .. '<div style="position:relative;top:-4px;border:2.5px solid ' .. getGames.games[gameg].hp2 .. '"></div>' end
-        if prop.mp then result = result .. styles.statlow .. prop.mp .. '<div style="position:relative;top:-4px;border:2.5px solid ' .. getGames.games[gameg].mp2 .. '"></div>' end
-        if prop.maxhp then result = result .. styles.statlow .. prop.maxhp .. '<div style="position:relative;top:-4px;border:2.5px solid ' .. getGames.games[gameg].hp2 .. '"></div>' end
-        if prop.maxmp then result = result .. styles.statlow .. prop.maxmp .. '<div style="position:relative;top:-4px;border:2.5px solid ' .. getGames.games[gameg].mp2 .. '"></div>' end
-        if gameg == "p5s" and prop.stagger then result = result .. styles.statlow .. prop.stagger end
-        if prop.traits then result = result .. styles.statlow .. prop.traits end
-        result = result .. "\n|}"
+        stat_table = stat_table .. "\n|}"
         if gameg == "p3" or gameg == "p3re" then
             if prop.hp then
                 if prop.boss then
                     if game == "p3p" then
-                        result = result .. cate("Persona 3 Portable Bosses")
+                        stat_categories = stat_categories .. cate("Persona 3 Portable Bosses")
                     elseif game == "p3f" then
-                        result = result .. cate(gamegn .. " Bosses")
+                        stat_categories = stat_categories .. cate(gamegn .. " Bosses")
                     else
-                        result = result .. cate(gamegn .. " Bosses") .. cate("Persona 3 Portable Bosses")
+                        stat_categories = stat_categories .. cate(gamegn .. " Bosses") .. cate("Persona 3 Portable Bosses")
                     end
                 else
-                    result = result .. cate(gamegn .. " Shadows")
+                    stat_categories = stat_categories .. cate(gamegn .. " Shadows")
                 end
             else
                 if game == "p3p" or game == "p3f" then
-                    result = result .. cate("Persona 3 FES Personas") .. cate("Persona 3 Portable Personas")
+                    stat_categories = stat_categories .. cate("Persona 3 FES Personas") .. cate("Persona 3 Portable Personas")
                 else
-                    result = result .. cate(gamegn .. " Personas") .. cate("Persona 3 FES Personas") .. cate("Persona 3 Portable Personas")
+                    stat_categories = stat_categories .. cate(gamegn .. " Personas") .. cate("Persona 3 FES Personas") .. cate("Persona 3 Portable Personas")
                 end
             end
         end
@@ -1305,41 +1362,47 @@ function p._stats(args)
             if prop.hp then
                 if prop.boss then
                     if prop.vanilla then
-                        result = result .. cate(gamen .. " Bosses")
+                        stat_categories = stat_categories .. cate(gamen .. " Bosses")
                     elseif game == "p4g" then
-                        result = result .. cate(gamen .. " Bosses")
+                        stat_categories = stat_categories .. cate(gamen .. " Bosses")
                     else
-                        result = result .. cate(gamegn .. " Bosses") .. cate("Persona 4 Golden Bosses")
+                        stat_categories = stat_categories .. cate(gamegn .. " Bosses") .. cate("Persona 4 Golden Bosses")
                     end
                 else
                     if prop.vanilla then
-                        result = result .. cate(gamen .. " Shadows")
+                        stat_categories = stat_categories .. cate(gamen .. " Shadows")
                     elseif game == "p4g" then
-                        result = result .. cate(gamen .. " Shadows")
+                        stat_categories = stat_categories .. cate(gamen .. " Shadows")
                     else
-                        result = result .. cate(gamegn .. " Shadows") .. cate("Persona 4 Golden Shadows")
+                        stat_categories = stat_categories .. cate(gamegn .. " Shadows") .. cate("Persona 4 Golden Shadows")
                     end
                 end
             else
                 if game == "p4g" then
-                    result = result .. cate(gamen .. " Personas")
+                    stat_categories = stat_categories .. cate(gamen .. " Personas")
                 else
-                    result = result .. cate(gamegn .. " Personas") .. cate("Persona 4 Golden Personas")
+                    stat_categories = stat_categories .. cate(gamegn .. " Personas") .. cate("Persona 4 Golden Personas")
                 end
             end
         end
-        if gameg == "p5" or gameg == "p5r" or gameg == "p5s" then
+        if gameg == "p5" or gameg == "p5r" or gameg == "p5s" or gameg == "p5x" then
             if prop.hp then
                 if prop.boss then
-                    result = result .. cate(gamen .. " Bosses")
+                    stat_categories = stat_categories .. cate(gamen .. " Bosses")
                 elseif prop.shadow then
-                    result = result .. cate(gamen .. " Shadows")
+                    stat_categories = stat_categories .. cate(gamen .. " Shadows")
                 else
-                    result = result .. cate(gamen .. " Enemies")
+                    stat_categories = stat_categories .. cate(gamen .. " Enemies")
                 end
             else
-                result = result .. cate(gamen .. " Personas")
+                stat_categories = stat_categories .. cate(gamen .. " Personas")
             end
+        end
+        if has_stat_bars then
+            result = result .. stat_table .. stat_categories
+        else
+            pending_top_stats = stat_table
+            pending_top_stats_categories = stat_categories
         end
     end
     if gameg == "metaphor" then
@@ -1565,9 +1628,9 @@ function p._stats(args)
         end
         result = result .. "\n|-\n" .. styles.statlow .. prop.racial .. styles.statlow .. prop.phys .. styles.statlow .. prop.fire .. styles.statlow .. prop.ice .. styles.statlow .. prop.elec .. styles.statlow .. prop.force .. styles.statlow .. prop.mystic .. "\n|}"
     end
-    if gameg == "ronde" or (gameg == "p3" or gameg == "p3re") or gameg == "p4" or gameg == "p5" or gameg == "p5r" or gameg == "p5s" or gameg == "metaphor" then
+    if gameg == "ronde" or (gameg == "p3" or gameg == "p3re") or gameg == "p4" or (gameg == "p5" or gameg == "p5r" or gameg == "p5s" or gameg == "p5x") or gameg == "metaphor" then
         if prop.sword or prop.strike or prop.pierce or prop.phys or prop.fire or prop.ice or prop.elec or prop.wind or prop.expel or prop.dark or prop.alm or prop.down or prop.dizzy or prop.freeze or prop.paralyze or prop.poison or prop.charm or prop.distress or prop.panic or prop.fear or prop.rage or prop.xp or prop.yen then
-            result = result .. styles.table2
+            local affinity_table = styles.table2
             if not prop.sword then prop.sword = "-" end
             if not prop.strike then prop.strike = "-" end
             if not prop.pierce then prop.pierce = "-" end
@@ -1593,35 +1656,36 @@ function p._stats(args)
             if not prop.fear then prop.fear = "?" end
             if not prop.rage then prop.rage = "?" end
             if gameg == "ronde" then
-                result = result .. styles.h .. "width=11%|[[Slash Skills|" .. styles.spanc .. "Slash</span>]]" .. styles.h .. "width=11%|[[Strike Skills|" .. styles.spanc .. "Strike</span>]]" .. styles.h .. "width=11%|[[Ranged Skills|" .. styles.spanc .. "Ranged</span>]]" .. styles.h .. "width=11%|[[Fire Skills|" .. styles.spanc .. "Fire</span>]]" .. styles.h .. "width=11%|[[Ice Skills|" .. styles.spanc .. "Ice</span>]]" .. styles.h .. 'title="Electricity" width=11%|[[Electricity Skills|' .. styles.spanc .. "Elec</span>]]" .. styles.h .. "width=11%|[[Light Skills|" .. styles.spanc .. "Light</span>]]" .. styles.h .. "width=11%|[[Dark Skills|" .. styles.spanc .. "Dark</span>]]" .. styles.h .. 'title="Almighty" width=12%|[[Almighty Skills|' .. styles.spanc .. "Almi</span>]]" .. "\n|-\n"
+                affinity_table = affinity_table .. styles.h .. "width=11%|[[Slash Skills|" .. styles.spanc .. "Slash</span>]]" .. styles.h .. "width=11%|[[Strike Skills|" .. styles.spanc .. "Strike</span>]]" .. styles.h .. "width=11%|[[Ranged Skills|" .. styles.spanc .. "Ranged</span>]]" .. styles.h .. "width=11%|[[Fire Skills|" .. styles.spanc .. "Fire</span>]]" .. styles.h .. "width=11%|[[Ice Skills|" .. styles.spanc .. "Ice</span>]]" .. styles.h .. 'title="Electricity" width=11%|[[Electricity Skills|' .. styles.spanc .. "Elec</span>]]" .. styles.h .. "width=11%|[[Light Skills|" .. styles.spanc .. "Light</span>]]" .. styles.h .. "width=11%|[[Dark Skills|" .. styles.spanc .. "Dark</span>]]" .. styles.h .. 'title="Almighty" width=12%|[[Almighty Skills|' .. styles.spanc .. "Almi</span>]]" .. "\n|-\n"
             elseif gameg == "p3" or gameg == "p3re" then
-                result = result .. styles.h .. "width=10%|[[Slash Skills|" .. styles.spanc .. "Slash</span>]]" .. styles.h .. "width=10%|[[Strike Skills|" .. styles.spanc .. "Strike</span>]]" .. styles.h .. "width=10%|[[Pierce Skills|" .. styles.spanc .. "Pierce</span>]]" .. styles.h .. "width=10%|[[Fire Skills|" .. styles.spanc .. "Fire</span>]]" .. styles.h .. "width=10%|[[Ice Skills|" .. styles.spanc .. "Ice</span>]]" .. styles.h .. 'title="Electricity" width=10%|[[Electricity Skills|' .. styles.spanc .. "Elec</span>]]" .. styles.h .. "width=10%|[[Wind Skills|" .. styles.spanc .. "Wind</span>]]" .. styles.h .. "width=10%|[[Light Skills (Affinity)|" .. styles.spanc .. "Light</span>]]" .. styles.h .. "width=10%|[[Dark Skills (Affinity)|" .. styles.spanc .. "Dark</span>]]" .. styles.h .. 'title="Almighty" width=10%|[[Almighty Skills|' .. styles.spanc .. "Almi</span>]]" .. "\n|-\n"
+                affinity_table = affinity_table .. styles.h .. "width=10%|[[Slash Skills|" .. styles.spanc .. "Slash</span>]]" .. styles.h .. "width=10%|[[Strike Skills|" .. styles.spanc .. "Strike</span>]]" .. styles.h .. "width=10%|[[Pierce Skills|" .. styles.spanc .. "Pierce</span>]]" .. styles.h .. "width=10%|[[Fire Skills|" .. styles.spanc .. "Fire</span>]]" .. styles.h .. "width=10%|[[Ice Skills|" .. styles.spanc .. "Ice</span>]]" .. styles.h .. 'title="Electricity" width=10%|[[Electricity Skills|' .. styles.spanc .. "Elec</span>]]" .. styles.h .. "width=10%|[[Wind Skills|" .. styles.spanc .. "Wind</span>]]" .. styles.h .. "width=10%|[[Light Skills (Affinity)|" .. styles.spanc .. "Light</span>]]" .. styles.h .. "width=10%|[[Dark Skills (Affinity)|" .. styles.spanc .. "Dark</span>]]" .. styles.h .. 'title="Almighty" width=10%|[[Almighty Skills|' .. styles.spanc .. "Almi</span>]]" .. "\n|-\n"
             elseif gameg == "p4" then
-                result = result .. styles.h .. 'title="Physical" width=14%|[[Physical Skills|' .. styles.spanc .. "Phys</span>]]" .. styles.h .. "width=12%|[[Fire Skills|" .. styles.spanc .. "Fire</span>]]" .. styles.h .. "width=12%|[[Ice Skills|" .. styles.spanc .. "Ice</span>]]" .. styles.h .. 'title="Electricity" width=12%|[[Electricity Skills|' .. styles.spanc .. "Elec</span>]]" .. styles.h .. "width=12%|[[Wind Skills|" .. styles.spanc .. "Wind</span>]]" .. styles.h .. "width=12%|[[Light Skills (Affinity)|" .. styles.spanc .. "Light</span>]]" .. styles.h .. "width=12%|[[Dark Skills (Affinity)|" .. styles.spanc .. "Dark</span>]]" .. styles.h .. 'title="Almighty" width=14%|[[Almighty Skills|' .. styles.spanc .. "Almi</span>]]" .. "\n|-\n"
-            elseif gameg == "p5" or gameg == "p5r" or gameg == "p5s" then
-                result = result .. styles.h .. 'title="Physical" width=9%|[[Physical Skills|' .. styles.spanc .. "Phys</span>]]" .. styles.h .. "width=9%|[[Gun Skills|" .. styles.spanc .. "Gun</span>]]" .. styles.h .. "width=9%|[[Fire Skills|" .. styles.spanc .. "Fire</span>]]" .. styles.h .. "width=9%|[[Ice Skills|" .. styles.spanc .. "Ice</span>]]" .. styles.h .. 'title="Electricity" width=9%|[[Electricity Skills|' .. styles.spanc .. "Elec</span>]]" .. styles.h .. "width=9%|[[Wind Skills|" .. styles.spanc .. "Wind</span>]]" .. styles.h .. 'title="Psychokinesis" widht=9%|[[Psychokinesis Skills|' .. styles.spanc .. "Psy</span>]]" .. styles.h .. 'title="Nuclear" width=9%|[[Nuclear Skills|' .. styles.spanc .. "Nuke</span>]]" .. styles.h .. "width=9%|[[Light Skills (Affinity)|" .. styles.spanc .. "Bless</span>]]" .. styles.h .. "width=9%|[[Dark Skills (Affinity)|" .. styles.spanc .. "Curse</span>]]" .. styles.h .. 'title="Almighty" width=10%|[[Almighty Skills|' .. styles.spanc .. "Almi</span>]]" .. "\n|-\n"
+                affinity_table = affinity_table .. styles.h .. 'title="Physical" width=14%|[[Physical Skills|' .. styles.spanc .. "Phys</span>]]" .. styles.h .. "width=12%|[[Fire Skills|" .. styles.spanc .. "Fire</span>]]" .. styles.h .. "width=12%|[[Ice Skills|" .. styles.spanc .. "Ice</span>]]" .. styles.h .. 'title="Electricity" width=12%|[[Electricity Skills|' .. styles.spanc .. "Elec</span>]]" .. styles.h .. "width=12%|[[Wind Skills|" .. styles.spanc .. "Wind</span>]]" .. styles.h .. "width=12%|[[Light Skills (Affinity)|" .. styles.spanc .. "Light</span>]]" .. styles.h .. "width=12%|[[Dark Skills (Affinity)|" .. styles.spanc .. "Dark</span>]]" .. styles.h .. 'title="Almighty" width=14%|[[Almighty Skills|' .. styles.spanc .. "Almi</span>]]" .. "\n|-\n"
+            elseif gameg == "p5" or gameg == "p5r" or gameg == "p5s" or gameg == "p5x" then
+                affinity_table = affinity_table .. styles.h .. 'title="Physical" width=9%|[[Physical Skills|' .. styles.spanc .. "Phys</span>]]" .. styles.h .. "width=9%|[[Gun Skills|" .. styles.spanc .. "Gun</span>]]" .. styles.h .. "width=9%|[[Fire Skills|" .. styles.spanc .. "Fire</span>]]" .. styles.h .. "width=9%|[[Ice Skills|" .. styles.spanc .. "Ice</span>]]" .. styles.h .. 'title="Electricity" width=9%|[[Electricity Skills|' .. styles.spanc .. "Elec</span>]]" .. styles.h .. "width=9%|[[Wind Skills|" .. styles.spanc .. "Wind</span>]]" .. styles.h .. 'title="Psychokinesis" widht=9%|[[Psychokinesis Skills|' .. styles.spanc .. "Psy</span>]]" .. styles.h .. 'title="Nuclear" width=9%|[[Nuclear Skills|' .. styles.spanc .. "Nuke</span>]]" .. styles.h .. "width=9%|[[Light Skills (Affinity)|" .. styles.spanc .. "Bless</span>]]" .. styles.h .. "width=9%|[[Dark Skills (Affinity)|" .. styles.spanc .. "Curse</span>]]" .. styles.h .. 'title="Almighty" width=10%|[[Almighty Skills|' .. styles.spanc .. "Almi</span>]]" .. "\n|-\n"
             elseif gameg == "metaphor" then
-                result = result .. styles.h .. "width=10%|[[Slash Skills|" .. styles.spanc .. "Slash</span>]]" .. styles.h .. "width=10%|[[Pierce Skills|" .. styles.spanc .. "Pierce</span>]]" .. styles.h .. "width=10%|[[Strike Skills|" .. styles.spanc .. "Strike</span>]]" .. styles.h .. "width=10%|[[Fire Skills|" .. styles.spanc .. "Fire</span>]]" .. styles.h .. "width=10%|[[Ice Skills|" .. styles.spanc .. "Ice</span>]]" .. styles.h .. 'title="Electricity" width=10%|[[Electricity Skills|' .. styles.spanc .. "Elec</span>]]" .. styles.h .. "width=10%|[[Wind Skills|" .. styles.spanc .. "Wind</span>]]" .. styles.h .. "width=10%|[[Light Skills (Affinity)|" .. styles.spanc .. "Light</span>]]" .. styles.h .. "width=10%|[[Dark Skills (Affinity)|" .. styles.spanc .. "Dark</span>]]" .. styles.h .. 'title="Almighty" width=10%|[[Almighty Skills|' .. styles.spanc .. "Almi</span>]]" .. "\n|-\n"
+                affinity_table = affinity_table .. styles.h .. "width=10%|[[Slash Skills|" .. styles.spanc .. "Slash</span>]]" .. styles.h .. "width=10%|[[Pierce Skills|" .. styles.spanc .. "Pierce</span>]]" .. styles.h .. "width=10%|[[Strike Skills|" .. styles.spanc .. "Strike</span>]]" .. styles.h .. "width=10%|[[Fire Skills|" .. styles.spanc .. "Fire</span>]]" .. styles.h .. "width=10%|[[Ice Skills|" .. styles.spanc .. "Ice</span>]]" .. styles.h .. 'title="Electricity" width=10%|[[Electricity Skills|' .. styles.spanc .. "Elec</span>]]" .. styles.h .. "width=10%|[[Wind Skills|" .. styles.spanc .. "Wind</span>]]" .. styles.h .. "width=10%|[[Light Skills (Affinity)|" .. styles.spanc .. "Light</span>]]" .. styles.h .. "width=10%|[[Dark Skills (Affinity)|" .. styles.spanc .. "Dark</span>]]" .. styles.h .. 'title="Almighty" width=10%|[[Almighty Skills|' .. styles.spanc .. "Almi</span>]]" .. "\n|-\n"
             end
             if gameg == "ronde" or (gameg == "p3" or gameg == "p3re") then
-                result = result .. styles.statlow .. prop.sword .. styles.statlow .. prop.strike .. styles.statlow .. prop.pierce
+                affinity_table = affinity_table .. styles.statlow .. prop.sword .. styles.statlow .. prop.strike .. styles.statlow .. prop.pierce
             elseif gameg == "metaphor" then
-                result = result .. styles.statlow .. prop.sword .. styles.statlow .. prop.pierce .. styles.statlow .. prop.strike
+                affinity_table = affinity_table .. styles.statlow .. prop.sword .. styles.statlow .. prop.pierce .. styles.statlow .. prop.strike
             elseif gameg == "p4" then
-                result = result .. styles.statlow .. prop.phys
-            elseif gameg == "p5" or gameg == "p5r" or gameg == "p5s" then
-                result = result .. styles.statlow .. prop.phys .. styles.statlow .. prop.gun
+                affinity_table = affinity_table .. styles.statlow .. prop.phys
+            elseif gameg == "p5" or gameg == "p5r" or gameg == "p5s" or gameg == "p5x" then
+                affinity_table = affinity_table .. styles.statlow .. prop.phys .. styles.statlow .. prop.gun
             end
-            result = result .. styles.statlow .. prop.fire .. styles.statlow .. prop.ice .. styles.statlow .. prop.elec
-            if (gameg == "p3" or gameg == "p3re") or gameg == "p4" or gameg == "p5" or gameg == "p5r" or gameg == "p5s" or gameg == "metaphor" then result = result .. styles.statlow .. prop.wind end
-            if gameg == "p5" or gameg == "p5r" or gameg == "p5s" then result = result .. styles.statlow .. prop.psy .. styles.statlow .. prop.nuclear end
-            result = result .. styles.statlow .. prop.expel .. styles.statlow .. prop.dark .. styles.statlow .. prop.alm
+            affinity_table = affinity_table .. styles.statlow .. prop.fire .. styles.statlow .. prop.ice .. styles.statlow .. prop.elec
+            if (gameg == "p3" or gameg == "p3re") or gameg == "p4" or (gameg == "p5" or gameg == "p5r" or gameg == "p5s" or gameg == "p5x") or gameg == "metaphor" then affinity_table = affinity_table .. styles.statlow .. prop.wind end
+            if gameg == "p5" or gameg == "p5r" or gameg == "p5s" or gameg == "p5x" then affinity_table = affinity_table .. styles.statlow .. prop.psy .. styles.statlow .. prop.nuclear end
+            affinity_table = affinity_table .. styles.statlow .. prop.expel .. styles.statlow .. prop.dark .. styles.statlow .. prop.alm
 
-            if gameg == "p3re" then result = result .. "\n|-\n" .. styles.h .. "width=10%|Down" .. styles.h .. "width=10%|Dizzy" .. styles.h .. "width=10%|[[Ice Skills|" .. styles.spanc .. "Freeze</span>]]" .. styles.h .. "width=10%|[[Electricity Skills|" .. styles.spanc .. "Shock</span>]]" .. styles.h .. "width=10%|Poison" .. styles.h .. "width=10%|Charm" .. styles.h .. "width=10%|Distress" .. styles.h .. "width=10%|Confuse" .. styles.h .. "width=10%|Fear" .. styles.h .. "width=10%|Rage" .. "\n|-\n" .. styles.statlow .. prop.down .. styles.statlow .. prop.dizzy .. styles.statlow .. prop.freeze .. styles.statlow .. prop.paralyze .. styles.statlow .. prop.poison .. styles.statlow .. prop.charm .. styles.statlow .. prop.distress .. styles.statlow .. prop.panic .. styles.statlow .. prop.fear .. styles.statlow .. prop.rage end
+            if gameg == "p3re" then affinity_table = affinity_table .. "\n|-\n" .. styles.h .. "width=10%|Down" .. styles.h .. "width=10%|Dizzy" .. styles.h .. "width=10%|[[Ice Skills|" .. styles.spanc .. "Freeze</span>]]" .. styles.h .. "width=10%|[[Electricity Skills|" .. styles.spanc .. "Shock</span>]]" .. styles.h .. "width=10%|Poison" .. styles.h .. "width=10%|Charm" .. styles.h .. "width=10%|Distress" .. styles.h .. "width=10%|Confuse" .. styles.h .. "width=10%|Fear" .. styles.h .. "width=10%|Rage" .. "\n|-\n" .. styles.statlow .. prop.down .. styles.statlow .. prop.dizzy .. styles.statlow .. prop.freeze .. styles.statlow .. prop.paralyze .. styles.statlow .. prop.poison .. styles.statlow .. prop.charm .. styles.statlow .. prop.distress .. styles.statlow .. prop.panic .. styles.statlow .. prop.fear .. styles.statlow .. prop.rage end
 
-            result = result .. "\n|}"
+            affinity_table = affinity_table .. "\n|}"
+            appendTopAffinityTable(affinity_table)
         elseif prop.inherit or prop.resist or prop.block or prop.absorb or prop.reflect or prop.weak then
-            result = result .. styles.table2
+            local affinity_table = styles.table2
             if not prop.inherit then prop.inherit = "-" end
             if not prop.resist then prop.resist = "-" end
             if not prop.block then prop.block = "-" end
@@ -1632,10 +1696,12 @@ function p._stats(args)
             else
                 prop.weak = '<span style="color:#f22">' .. prop.weak .. "</span>"
             end
-            if gameg ~= "metaphor" then result = result .. styles.h .. "|[[Skill Inheritance|" .. styles.spanc .. "Inherit</span>]]" end
-            result = result .. styles.h .. "|Reflects" .. styles.h .. "|Absorbs" .. styles.h .. "|Block" .. styles.h .. "|Resists" .. styles.h .. "|Weak\n|-\n" .. styles.statlow .. prop.inherit .. styles.statlow .. prop.reflect .. styles.statlow .. prop.absorb .. styles.statlow .. prop.block .. styles.statlow .. prop.resist .. styles.statlow .. prop.weak .. "\n|}"
+            if gameg ~= "metaphor" then affinity_table = affinity_table .. styles.h .. "|[[Skill Inheritance|" .. styles.spanc .. "Inherit</span>]]" end
+            affinity_table = affinity_table .. styles.h .. "|Reflects" .. styles.h .. "|Absorbs" .. styles.h .. "|Block" .. styles.h .. "|Resists" .. styles.h .. "|Weak\n|-\n" .. styles.statlow .. prop.inherit .. styles.statlow .. prop.reflect .. styles.statlow .. prop.absorb .. styles.statlow .. prop.block .. styles.statlow .. prop.resist .. styles.statlow .. prop.weak .. "\n|}"
+            appendTopAffinityTable(affinity_table)
         end
     end
+    flushPendingTopStats()
     if (gameg == "p2is" or gameg == "p2ep") and (prop.exclusive or prop.traits or prop.convo) then
         result = result .. styles.table2
         if prop.exclusive then result = result .. styles.h .. "width=90px|Exclusive to" .. styles.order .. prop.exclusive end
@@ -1754,28 +1820,31 @@ function p._stats(args)
             result = result .. "\n|}"
         end
     end
-    if (gameg == "p5" or gameg == "p5r" or gameg == "p5s") and prop.hp then
-        result = result .. styles.table2
-        if not prop.xp then prop.xp = "-" end
-        if not prop.yen then prop.yen = "-" end
-        if not prop.normal then prop.normal = "-" end
-        if not prop.material then prop.material = prop.normal end
-        if not prop.drop1 then prop.drop1 = "-" end
-        if not prop.card then prop.card = "-" end
-        if not prop.dropc then prop.dropc = prop.card end
-        local cnt_drops = 2
-        if prop.drop3 then
-            cnt_drops = 4
-        elseif prop.drop2 then
-            cnt_drops = 3
+    if (gameg == "p5" or gameg == "p5r" or gameg == "p5s" or gameg == "p5x") and prop.hp then
+        local has_drop_row = gameg ~= "p5x" or hasFilledValue(prop.xp) or hasFilledValue(prop.yen) or hasFilledValue(prop.normal) or hasFilledValue(prop.material) or hasFilledValue(prop.drop1) or hasFilledValue(prop.drop2) or hasFilledValue(prop.drop3) or hasFilledValue(prop.card) or hasFilledValue(prop.dropc)
+        if has_drop_row then
+            result = result .. styles.table2
+            if not prop.xp then prop.xp = "-" end
+            if not prop.yen then prop.yen = "-" end
+            if not prop.normal then prop.normal = "-" end
+            if not prop.material then prop.material = prop.normal end
+            if not prop.drop1 then prop.drop1 = "-" end
+            if not prop.card then prop.card = "-" end
+            if not prop.dropc then prop.dropc = prop.card end
+            local cnt_drops = 2
+            if prop.drop3 then
+                cnt_drops = 4
+            elseif prop.drop2 then
+                cnt_drops = 3
+            end
+            if prop.drop1 == "-" and prop.dropc == "-" then cnt_drops = 1 end
+            result = result .. styles.h .. "|EXP" .. styles.h .. "|Yen" .. styles.h .. "|[[Battle Drops|" .. styles.spanc .. "Battle Drop</span>]]" .. styles.h .. "colspan=" .. cnt_drops .. "|[[Negotiation|" .. styles.spanc .. "Negotiation Items</span>]]" .. "\n|-\n"
+            result = result .. styles.statlow .. prop.xp .. styles.statlow .. prop.yen .. styles.statlow .. prop.material .. styles.statlow .. prop.drop1
+            if prop.drop2 then result = result .. styles.statlow .. prop.drop2 end
+            if prop.drop3 then result = result .. styles.statlow .. prop.drop3 .. " (Rare)" end
+            if prop.dropc ~= "-" then result = result .. styles.statlow .. prop.dropc .. " ([[Skill Card|" .. styles.spanc .. "Skill Card</span>]])" end
+            result = result .. "\n|}"
         end
-        if prop.drop1 == "-" and prop.dropc == "-" then cnt_drops = 1 end
-        result = result .. styles.h .. "|EXP" .. styles.h .. "|Yen" .. styles.h .. "|[[Battle Drops|" .. styles.spanc .. "Battle Drop</span>]]" .. styles.h .. "colspan=" .. cnt_drops .. "|[[Negotiation|" .. styles.spanc .. "Negotiation Items</span>]]" .. "\n|-\n"
-        result = result .. styles.statlow .. prop.xp .. styles.statlow .. prop.yen .. styles.statlow .. prop.material .. styles.statlow .. prop.drop1
-        if prop.drop2 then result = result .. styles.statlow .. prop.drop2 end
-        if prop.drop3 then result = result .. styles.statlow .. prop.drop3 .. " (Rare)" end
-        if prop.dropc ~= "-" then result = result .. styles.statlow .. prop.dropc .. " ([[Skill Card|" .. styles.spanc .. "Skill Card</span>]])" end
-        result = result .. "\n|}"
     end
     if (gameg == "sh2") and (prop.xp or prop.yen or prop.normal) then
         result = result .. styles.table2
@@ -2211,7 +2280,7 @@ function p._stats(args)
             result = result .. '"' .. styles.h .. "colspan=7|[[List of " .. gamegn .. " Skills|" .. styles.spanc .. "Magic Skills</span>]]"
         elseif gameg == "majin2" then
             result = result .. '"' .. styles.h .. "colspan=6|[[List of " .. gamegn .. " Skills|" .. styles.spanc .. "List of Skills</span>]]"
-        elseif gameg == "p5" or gameg == "p5r" or gameg == "p5s" then
+        elseif gameg == "p5" or gameg == "p5r" or gameg == "p5s" or gameg == "p5x" then
             result = result .. '"\n!colspan=4 style="background-color: ' .. getGames.games[gameg].colorb .. ";background: linear-gradient(120deg, " .. getGames.games[gameg].colorb .. " 42%, #000 42.1%, #000 43%, #fff 43.1%, #fff 57%, #000 57.1%, #000 58%, " .. getGames.games[gameg].colorb .. ' 58.1%"|[[List of ' .. gamegn .. ' Skills|<span style="color:black;text-shadow:-3px 3px 3px #0ff">List of Skills</span>]]'
         elseif gameg == "desu1" or gameg == "desu2" then
             result = result .. '"' .. styles.h .. "colspan=3|[[List of " .. gamegn .. " Skills|" .. styles.spanc .. "Command Skills</span>]]"
@@ -2340,7 +2409,7 @@ function p._stats(args)
                 elseif skill then
                     if skill.phy then
                         cost = "none"
-                    --[[elseif gameg == 'p5' or gameg == 'p5r' or gameg == 'p5s' then
+                    --[[elseif gameg == 'p5' or gameg == 'p5r' or gameg == 'p5s' or gameg == 'p5x' then
                         cost = '<span style="color:' .. getGames.games[gameg].mp2 .. '">' .. skill.cost .. '</span>' -- tints pink for magic skill]]
                     --
                     else
@@ -2360,7 +2429,7 @@ function p._stats(args)
                 end
                 result = result .. skillcell .. cost .. effect
             end
-        elseif (gameg == "smt4" and prop.guest == "2") or ((gameg == "p1" or gameg == "p2is" or gameg == "p2ep" or gameg == "p3" or gameg == "p3re" or gameg == "p4" or gameg == "p5" or gameg == "p5r" or gameg == "p5s" or gameg == "metaphor") and prop.hp) or gameg == "ddsaga1" or gameg == "ddsaga2" or ((gameg == "pq" or gameg == "pq2") and not prop.arcana) or prop.boss or prop.enemy then -- skill - effect (optional: Inheritable Skill or Rumor Skill)
+        elseif (gameg == "smt4" and prop.guest == "2") or ((gameg == "p1" or gameg == "p2is" or gameg == "p2ep" or gameg == "p3" or gameg == "p3re" or gameg == "p4" or gameg == "p5" or gameg == "p5r" or gameg == "p5s" or gameg == "p5x" or gameg == "metaphor") and prop.hp) or gameg == "ddsaga1" or gameg == "ddsaga2" or ((gameg == "pq" or gameg == "pq2") and not prop.arcana) or prop.boss or prop.enemy then -- skill - effect (optional: Inheritable Skill or Rumor Skill)
             result = result .. styles.skill .. "Skill" .. styles.skillc .. "Effect"
             for k1, v1 in ipairs(mw.text.split(prop.skills, "\n")) do
                 for k2, v2 in ipairs(mw.text.split(v1 .. "\\", "\\")) do
@@ -2619,7 +2688,7 @@ function p._stats(args)
                             else
                                 cost = skill.cost
                             end
-                            if gameg == "p5" or gameg == "p5r" or gameg == "p5s" then
+                            if gameg == "p5" or gameg == "p5r" or gameg == "p5s" or gameg == "p5x" then
                                 if string.match(skill.cost, "HP") then
                                     cost = '<span style="color:' .. getGames.games[gameg].hp2 .. '">' .. skill.cost .. "</span>" -- tints cyan for phys skill
                                 elseif string.match(skill.cost, "SP") then
