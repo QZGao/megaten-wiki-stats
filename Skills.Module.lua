@@ -443,18 +443,6 @@ local function get_prop(args)
     return prop
 end
 
--- Detect whether any configured stat key contains a renderable stat-bar value.
--- Used by Persona 3/4/5/P5X top stat rendering to choose merged-row layout behavior.
-local function hasAnyStatBarValue(prop, statKeys)
-    for _, key in ipairs(statKeys) do
-        local value = prop[key]
-        if value == "i" or tonumber(value) ~= nil then
-            return true
-        end
-    end
-    return false
-end
-
 -- Test whether an optional value is present and not an explicit dash placeholder.
 -- Used by P5/P5X Arcana and reward-row hiding logic.
 local function hasFilledValue(value)
@@ -543,7 +531,6 @@ function p._stats(args)
         bossdemonnocat = bossdemonnocat,
         bossdemoncat = bossdemoncat,
         bar = bar,
-        hasAnyStatBarValue = hasAnyStatBarValue,
         hasFilledValue = hasFilledValue,
     })
 end

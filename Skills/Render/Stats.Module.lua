@@ -23,7 +23,6 @@ function p.renderTop(ctx, result)
     local bossdemoncat = ctx.bossdemoncat
     local bossdemonnocat = ctx.bossdemonnocat
     local bar = ctx.bar
-    local hasAnyStatBarValue = ctx.hasAnyStatBarValue
     local hasFilledValue = ctx.hasFilledValue
     if prop.location then
         prop.location = "[[" .. prop.location .. "]]"
@@ -665,54 +664,43 @@ function p.renderTop(ctx, result)
     end
     if (gameg == "p3" or gameg == "p3re") or gameg == "p4" or (gameg == "p5" or gameg == "p5r" or gameg == "p5s" or gameg == "p5x") then
         local has_arcana = not ((gameg == "p5" or gameg == "p5r" or gameg == "p5x") and not hasFilledValue(prop.arcana))
-        local has_stat_bars = hasAnyStatBarValue(prop, { "str", "magic", "vit", "agl", "luc" })
+        local str = prop.str
+        local magic = prop.magic
+        local vit = prop.vit
+        local agl = prop.agl
+        local luc = prop.luc
+        local has_stat_bars = str == "i" or tonumber(str) ~= nil
+            or magic == "i" or tonumber(magic) ~= nil
+            or vit == "i" or tonumber(vit) ~= nil
+            or agl == "i" or tonumber(agl) ~= nil
+            or luc == "i" or tonumber(luc) ~= nil
+        local game_data = getGames.games[gameg]
         local stat_table = styles.table2
         local stat_categories = ""
-        if has_stat_bars then
-            if has_arcana then
-                stat_table = stat_table .. styles.h .. "|[[Arcana|" .. styles.spanc .. "Arcana</span>]]"
-            end
-            stat_table = stat_table .. styles.h .. 'width="50px"|[[Level (stat)|' .. styles.spanc .. "Level</span>]]"
-            if prop.hp then stat_table = stat_table .. styles.h .. 'width="40px"|HP' end
-            if prop.mp then stat_table = stat_table .. styles.h .. 'width="40px"|SP' end
-            if prop.maxhp then stat_table = stat_table .. styles.h .. 'width="40px"|HP' end
-            if prop.maxmp then stat_table = stat_table .. styles.h .. 'width="40px"|SP' end
-            if gameg == "p5s" and prop.stagger then stat_table = stat_table .. styles.h .. '|[[Stagger Gauge|<span style="color:#fff">Stagger Gauge</span>]]' end
-            if prop.traits then stat_table = stat_table .. styles.h .. '|[[Personality|<span style="color:#fff">Type</span>]]' end
-            stat_table = stat_table .. styles.bart11 .. "324px" .. styles.bart12 .. '0.8"' .. styles.barh .. "|Strength" .. styles.bard2 .. bar(styles.barc, prop.str, 2.4, 99) .. styles.barh .. "|Magic" .. styles.bard2 .. bar(styles.barc, prop.magic, 2.4, 99) .. styles.barh .. "|Endurance" .. styles.bard2 .. bar(styles.barc, prop.vit, 2.4, 99) .. styles.barh .. "|Agility" .. styles.bard2 .. bar(styles.barc, prop.agl, 2.4, 99) .. styles.barh .. "|Luck" .. styles.bard2 .. bar(styles.barc, prop.luc, 2.4, 99) .. "\n|}\n|-"
-            if has_arcana then
-                stat_table = stat_table .. styles.statlow .. getArcana(prop.arcana, gameg, gamegn)
-            end
-            stat_table = stat_table .. styles.statlow .. prop.level
-            if prop.hp then stat_table = stat_table .. styles.statlow .. prop.hp .. '<div style="position:relative;top:-4px;border:2.5px solid ' .. getGames.games[gameg].hp2 .. '"></div>' end
-            if prop.mp then stat_table = stat_table .. styles.statlow .. prop.mp .. '<div style="position:relative;top:-4px;border:2.5px solid ' .. getGames.games[gameg].mp2 .. '"></div>' end
-            if prop.maxhp then stat_table = stat_table .. styles.statlow .. prop.maxhp .. '<div style="position:relative;top:-4px;border:2.5px solid ' .. getGames.games[gameg].hp2 .. '"></div>' end
-            if prop.maxmp then stat_table = stat_table .. styles.statlow .. prop.maxmp .. '<div style="position:relative;top:-4px;border:2.5px solid ' .. getGames.games[gameg].mp2 .. '"></div>' end
-            if gameg == "p5s" and prop.stagger then stat_table = stat_table .. styles.statlow .. prop.stagger end
-            if prop.traits then stat_table = stat_table .. styles.statlow .. prop.traits end
-        else
-            if has_arcana then
-                stat_table = stat_table .. styles.h .. "|[[Arcana|" .. styles.spanc .. "Arcana</span>]]"
-            end
-            stat_table = stat_table .. styles.h .. 'width="50px"|[[Level (stat)|' .. styles.spanc .. "Level</span>]]"
-            if prop.hp then stat_table = stat_table .. styles.h .. 'width="40px"|HP' end
-            if prop.mp then stat_table = stat_table .. styles.h .. 'width="40px"|SP' end
-            if prop.maxhp then stat_table = stat_table .. styles.h .. 'width="40px"|HP' end
-            if prop.maxmp then stat_table = stat_table .. styles.h .. 'width="40px"|SP' end
-            if gameg == "p5s" and prop.stagger then stat_table = stat_table .. styles.h .. '|[[Stagger Gauge|<span style="color:#fff">Stagger Gauge</span>]]' end
-            if prop.traits then stat_table = stat_table .. styles.h .. '|[[Personality|<span style="color:#fff">Type</span>]]' end
-            stat_table = stat_table .. "\n|-"
-            if has_arcana then
-                stat_table = stat_table .. styles.statlow .. getArcana(prop.arcana, gameg, gamegn)
-            end
-            stat_table = stat_table .. styles.statlow .. prop.level
-            if prop.hp then stat_table = stat_table .. styles.statlow .. prop.hp .. '<div style="position:relative;top:-4px;border:2.5px solid ' .. getGames.games[gameg].hp2 .. '"></div>' end
-            if prop.mp then stat_table = stat_table .. styles.statlow .. prop.mp .. '<div style="position:relative;top:-4px;border:2.5px solid ' .. getGames.games[gameg].mp2 .. '"></div>' end
-            if prop.maxhp then stat_table = stat_table .. styles.statlow .. prop.maxhp .. '<div style="position:relative;top:-4px;border:2.5px solid ' .. getGames.games[gameg].hp2 .. '"></div>' end
-            if prop.maxmp then stat_table = stat_table .. styles.statlow .. prop.maxmp .. '<div style="position:relative;top:-4px;border:2.5px solid ' .. getGames.games[gameg].mp2 .. '"></div>' end
-            if gameg == "p5s" and prop.stagger then stat_table = stat_table .. styles.statlow .. prop.stagger end
-            if prop.traits then stat_table = stat_table .. styles.statlow .. prop.traits end
+        if has_arcana then
+            stat_table = stat_table .. styles.h .. "|[[Arcana|" .. styles.spanc .. "Arcana</span>]]"
         end
+        stat_table = stat_table .. styles.h .. 'width="50px"|[[Level (stat)|' .. styles.spanc .. "Level</span>]]"
+        if prop.hp then stat_table = stat_table .. styles.h .. 'width="40px"|HP' end
+        if prop.mp then stat_table = stat_table .. styles.h .. 'width="40px"|SP' end
+        if prop.maxhp then stat_table = stat_table .. styles.h .. 'width="40px"|HP' end
+        if prop.maxmp then stat_table = stat_table .. styles.h .. 'width="40px"|SP' end
+        if gameg == "p5s" and prop.stagger then stat_table = stat_table .. styles.h .. '|[[Stagger Gauge|<span style="color:#fff">Stagger Gauge</span>]]' end
+        if prop.traits then stat_table = stat_table .. styles.h .. '|[[Personality|<span style="color:#fff">Type</span>]]' end
+        if has_stat_bars then
+            stat_table = stat_table .. styles.bart11 .. "324px" .. styles.bart12 .. '0.8"' .. styles.barh .. "|Strength" .. styles.bard2 .. bar(styles.barc, str, 2.4, 99) .. styles.barh .. "|Magic" .. styles.bard2 .. bar(styles.barc, magic, 2.4, 99) .. styles.barh .. "|Endurance" .. styles.bard2 .. bar(styles.barc, vit, 2.4, 99) .. styles.barh .. "|Agility" .. styles.bard2 .. bar(styles.barc, agl, 2.4, 99) .. styles.barh .. "|Luck" .. styles.bard2 .. bar(styles.barc, luc, 2.4, 99) .. "\n|}"
+        end
+        stat_table = stat_table .. "\n|-"
+        if has_arcana then
+            stat_table = stat_table .. styles.statlow .. getArcana(prop.arcana, gameg, gamegn)
+        end
+        stat_table = stat_table .. styles.statlow .. prop.level
+        if prop.hp then stat_table = stat_table .. styles.statlow .. prop.hp .. '<div style="position:relative;top:-4px;border:2.5px solid ' .. game_data.hp2 .. '"></div>' end
+        if prop.mp then stat_table = stat_table .. styles.statlow .. prop.mp .. '<div style="position:relative;top:-4px;border:2.5px solid ' .. game_data.mp2 .. '"></div>' end
+        if prop.maxhp then stat_table = stat_table .. styles.statlow .. prop.maxhp .. '<div style="position:relative;top:-4px;border:2.5px solid ' .. game_data.hp2 .. '"></div>' end
+        if prop.maxmp then stat_table = stat_table .. styles.statlow .. prop.maxmp .. '<div style="position:relative;top:-4px;border:2.5px solid ' .. game_data.mp2 .. '"></div>' end
+        if gameg == "p5s" and prop.stagger then stat_table = stat_table .. styles.statlow .. prop.stagger end
+        if prop.traits then stat_table = stat_table .. styles.statlow .. prop.traits end
         stat_table = stat_table .. "\n|}"
         if gameg == "p3" or gameg == "p3re" then
             if prop.hp then
