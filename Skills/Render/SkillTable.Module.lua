@@ -32,6 +32,22 @@ local function stripWikiLinks(text)
     return string.gsub(string.gsub(text, "%[%[", ""), "%]%]", "")
 end
 
+-- Return the first two backslash-separated fields without allocating a split table.
+-- Used by skill-row formats where legacy code ignored any fields after the second one.
+local function splitBackslashPair(text)
+    local firstSlash = string.find(text, "\\", 1, true)
+    if not firstSlash then
+        return text, ""
+    end
+
+    local secondSlash = string.find(text, "\\", firstSlash + 1, true)
+    if not secondSlash then
+        return string.sub(text, 1, firstSlash - 1), string.sub(text, firstSlash + 1)
+    end
+
+    return string.sub(text, 1, firstSlash - 1), string.sub(text, firstSlash + 1, secondSlash - 1)
+end
+
 -- Append one cell to a three-column skill grid.
 -- Some legacy non-boss grids center the seventh skill by padding both sides.
 local function appendThreeColumnGridCell(result, styles, index, cell, centerSeventh)
@@ -392,36 +408,30 @@ local function renderSkillEffectRows(ctx, result)
 
     result = result .. styles.skill .. "Skill" .. styles.skillc .. "Effect"
     for k1, v1 in ipairs(mw.text.split(prop.skills, "\n")) do
-        for k2, v2 in ipairs(mw.text.split(v1 .. "\\", "\\")) do
-            if k2 > 2 then
-                break
-            elseif k2 % 2 == 1 then
-                v2, skill = resolveSkill(data, v2)
-                if v2 == "" then
-                    skillcell = ""
-                    effect = noskill()
-                elseif not skill then
-                    skillcell = ""
-                    effect = noskill(v2, gamed)
-                elseif skill then
-                    local effectText = formatTaggedSkillEffect(skill, gameData)
-                    if k1 % 2 == 0 then
-                        effect = styles.effect2 .. effectText
-                    else
-                        effect = styles.effect1 .. effectText
-                    end
-                    skillcell = styles.skill .. displaySkillName(v2, skill)
-                end
-                result = result .. skillcell .. effect
-            elseif k2 % 2 == 0 then
-                if v2 == "I" or v2 == "i" then
-                    result = result .. '<div style="float:right;background:#696969;border-radius:15px;padding:0 10px">Inheritable Skill</div>'
-                elseif v2 == "R" or v2 == "r" then
-                    result = result .. '<div style="float:right;background:#8E283D;border-radius:15px;padding:0 10px">[[Misc Skills#Rumor Magic|<span style="color:#fff">Rumor Skill</span>]]</div>'
-                else
-                    result = result
-                end
+        local marker
+        v1, marker = splitBackslashPair(v1)
+        v1, skill = resolveSkill(data, v1)
+        if v1 == "" then
+            skillcell = ""
+            effect = noskill()
+        elseif not skill then
+            skillcell = ""
+            effect = noskill(v1, gamed)
+        elseif skill then
+            local effectText = formatTaggedSkillEffect(skill, gameData)
+            if k1 % 2 == 0 then
+                effect = styles.effect2 .. effectText
+            else
+                effect = styles.effect1 .. effectText
             end
+            skillcell = styles.skill .. displaySkillName(v1, skill)
+        end
+        result = result .. skillcell .. effect
+
+        if marker == "I" or marker == "i" then
+            result = result .. '<div style="float:right;background:#696969;border-radius:15px;padding:0 10px">Inheritable Skill</div>'
+        elseif marker == "R" or marker == "r" then
+            result = result .. '<div style="float:right;background:#8E283D;border-radius:15px;padding:0 10px">[[Misc Skills#Rumor Magic|<span style="color:#fff">Rumor Skill</span>]]</div>'
         end
     end
     return result
@@ -487,66 +497,62 @@ local function renderRankSkillRows(ctx, result)
         result = result .. "Rank" .. styles.skillc .. "Skill" .. styles.skillc .. "Effect"
     end
     for k1, v1 in ipairs(mw.text.split(prop.skills, "\n")) do
-        for k2, v2 in ipairs(mw.text.split(v1 .. "\\", "\\")) do
-            if k2 > 2 then
-                break
-            elseif k2 % 2 == 1 then
-                result = result .. styles.skill .. formatRankLabel(v2)
-            elseif k2 % 2 == 0 then
-                v2, skill = resolveSkill(data, v2)
-                if v2 == "" then
-                    skillcell = ""
+        local rank
+        rank, v1 = splitBackslashPair(v1)
+        result = result .. styles.skill .. formatRankLabel(rank)
+
+        v1, skill = resolveSkill(data, v1)
+        if v1 == "" then
+            skillcell = ""
+            cost = ""
+            range = ""
+            power = ""
+            target = ""
+            effect = noskill()
+        elseif not skill then
+            skillcell = ""
+            cost = ""
+            range = ""
+            power = ""
+            target = ""
+            effect = noskill(v1, gamed)
+        elseif skill then
+            if k1 % 2 == 0 then
+                if gameg == "smtim" or gameg == "ab" then
+                    cost = styles.cost2 .. skill.cost
+                else
                     cost = ""
-                    range = ""
-                    power = ""
-                    target = ""
-                    effect = noskill()
-                elseif not skill then
-                    skillcell = ""
-                    cost = ""
-                    range = ""
-                    power = ""
-                    target = ""
-                    effect = noskill(v2, gamed)
-                elseif skill then
-                    if k1 % 2 == 0 then
-                        if gameg == "smtim" or gameg == "ab" then
-                            cost = styles.cost2 .. skill.cost
-                        else
-                            cost = ""
-                        end
-                        if gameg == "ab" then
-                            range = styles.cost2 .. skill.range
-                            power = styles.cost2 .. skill.power
-                            target = styles.cost2 .. skill.target
-                        else
-                            range = ""
-                            power = ""
-                            target = ""
-                        end
-                        effect = styles.effect2 .. skill.effect
-                    else
-                        if gameg == "smtim" or gameg == "ab" then
-                            cost = styles.cost1 .. skill.cost
-                        else
-                            cost = ""
-                        end
-                        if gameg == "ab" then
-                            range = styles.cost1 .. skill.range
-                            power = styles.cost1 .. skill.power
-                            target = styles.cost1 .. skill.target
-                        else
-                            range = ""
-                            power = ""
-                            target = ""
-                        end
-                        effect = styles.effect1 .. skill.effect
-                    end
-                    skillcell = styles.skillc .. displaySkillName(v2, skill)
                 end
-                result = result .. skillcell .. cost .. range .. power .. target .. effect
+                if gameg == "ab" then
+                    range = styles.cost2 .. skill.range
+                    power = styles.cost2 .. skill.power
+                    target = styles.cost2 .. skill.target
+                else
+                    range = ""
+                    power = ""
+                    target = ""
+                end
+                effect = styles.effect2 .. skill.effect
+            else
+                if gameg == "smtim" or gameg == "ab" then
+                    cost = styles.cost1 .. skill.cost
+                else
+                    cost = ""
+                end
+                if gameg == "ab" then
+                    range = styles.cost1 .. skill.range
+                    power = styles.cost1 .. skill.power
+                    target = styles.cost1 .. skill.target
+                else
+                    range = ""
+                    power = ""
+                    target = ""
+                end
+                effect = styles.effect1 .. skill.effect
             end
+            skillcell = styles.skillc .. displaySkillName(v1, skill)
         end
+        result = result .. skillcell .. cost .. range .. power .. target .. effect
     end
     return result
 end
@@ -624,44 +630,40 @@ local function renderDefaultSkillRows(ctx, result)
         result = result .. styles.skillc .. "Cost" .. styles.skillc .. "Effect" .. styles.skillc .. "Level"
     end
     for k1, v1 in ipairs(mw.text.split(prop.skills, "\n")) do -- Any entry on new line within "Skills" parameter is treated as new skill name.
-        for k2, v2 in ipairs(mw.text.split(v1 .. "\\", "\\")) do -- Entry after backslash after skill name is treated as "level" for learning new skill per level gain. Any entry starting from second backslash on the same line is ignored until a new line.
-            if k2 > 2 then
-                break
-            elseif k2 % 2 == 1 then -- this checks level (false) or skill name (true) divided by the backslash.
-                v2, skill = resolveSkill(data, v2) -- now v2 represents skill name.
-                if v2 == "" then
-                    skillcell = ""
-                    cost = ""
-                    effect = noskill()
-                elseif not skill then
-                    skillcell = ""
-                    cost = ""
-                    effect = noskill(v2, gamed)
-                elseif skill then
-                    cost = formatDefaultSkillCost(skill, gameg, gameData)
-                    local effectText = formatExpandedSkillEffect(skill, gameData)
-                    if k1 % 2 == 0 then
-                        cost = styles.cost2 .. cost
-                        effect = styles.effect2 .. effectText
-                    else
-                        cost = styles.cost1 .. cost
-                        effect = styles.effect1 .. effectText
-                    end
-                    skillcell = styles.skill .. displaySkillName(v2, skill)
-                end
-                if not guestEffectLevelRows then
-                    result = result .. skillcell .. cost .. effect
-                else
-                    result = result .. skillcell .. effect
-                end
-            elseif k2 % 2 == 0 then -- this checks level (true) or skill name (false) divided by the backslash.
-                v2 = formatLevelLabel(v2)
-                if k1 % 2 == 0 then -- this checks even (true) or odd (false) number row.
-                    result = result .. styles.cost2 .. v2 -- "v2" represents "Level" within "Skills" parameter on each new line after the backslash.
-                else
-                    result = result .. styles.cost1 .. v2
-                end
+        local level
+        v1, level = splitBackslashPair(v1) -- Entry after backslash is treated as the level; later entries are ignored.
+        v1, skill = resolveSkill(data, v1)
+        if v1 == "" then
+            skillcell = ""
+            cost = ""
+            effect = noskill()
+        elseif not skill then
+            skillcell = ""
+            cost = ""
+            effect = noskill(v1, gamed)
+        elseif skill then
+            cost = formatDefaultSkillCost(skill, gameg, gameData)
+            local effectText = formatExpandedSkillEffect(skill, gameData)
+            if k1 % 2 == 0 then
+                cost = styles.cost2 .. cost
+                effect = styles.effect2 .. effectText
+            else
+                cost = styles.cost1 .. cost
+                effect = styles.effect1 .. effectText
             end
+            skillcell = styles.skill .. displaySkillName(v1, skill)
+        end
+        if not guestEffectLevelRows then
+            result = result .. skillcell .. cost .. effect
+        else
+            result = result .. skillcell .. effect
+        end
+
+        level = formatLevelLabel(level)
+        if k1 % 2 == 0 then
+            result = result .. styles.cost2 .. level
+        else
+            result = result .. styles.cost1 .. level
         end
     end
     return result
@@ -822,47 +824,43 @@ local function renderChildLightFusionRows(ctx, result)
 
     result = result .. "|[[List of DemiKids Light/Dark Version Skills#Combos|" .. styles.spanc .. "Combos</span>]]" .. styles.skill .. "Combo" .. styles.skillc .. "Element" .. styles.skillc .. "Cost" .. styles.skillc .. "Effect" .. styles.skillc .. "Partner"
     for k1, v1 in ipairs(mw.text.split(prop.fskills, "\n")) do
-        for k2, v2 in ipairs(mw.text.split(v1 .. "\\", "\\")) do -- Entry after backslash after skill name is treated as "partner"
-            if k2 > 2 then
-                break
-            elseif k2 % 2 == 1 then -- this checks partner (false) or skill name (true) divided by the backslash.
-                v2, skill = resolveSkill(data, v2) -- now v2 represents skill name.
-                if v2 == "" then
-                    skillcell = ""
-                    skille = ""
-                    cost = ""
-                    effect = noskill()
-                elseif not skill then
-                    skillcell = ""
-                    skille = ""
-                    cost = ""
-                    effect = noskill(v2, gamed)
-                elseif skill then
-                    skille = skill.element
-                    cost = skill.cost
-                    effect = skill.effect
-                    if k1 % 2 == 0 then
-                        skille = styles.cost2 .. skille
-                        cost = styles.cost2 .. cost
-                        effect = styles.effect2 .. effect
-                    else
-                        skille = styles.cost1 .. skille
-                        cost = styles.cost1 .. cost
-                        effect = styles.effect1 .. effect
-                    end
-                    skillcell = styles.skill .. displaySkillName(v2, skill)
-                end
-                result = result .. skillcell .. skille .. cost .. effect
-            elseif k2 % 2 == 0 then -- this checks partner (true) or skill name (false) divided by the backslash.
-                if v2 == "" or not v2 then -- now v2 represents partner.
-                    v2 = ""
-                end
-                if k1 % 2 == 0 then -- this checks even (true) or odd (false) number row.
-                    result = result .. styles.cost2 .. v2 -- "v2" represents "partner" within "Skills" parameter on each new line after the backslash.
-                else
-                    result = result .. styles.cost1 .. v2
-                end
+        local partner
+        v1, partner = splitBackslashPair(v1) -- Entry after backslash after skill name is treated as "partner".
+        v1, skill = resolveSkill(data, v1)
+        if v1 == "" then
+            skillcell = ""
+            skille = ""
+            cost = ""
+            effect = noskill()
+        elseif not skill then
+            skillcell = ""
+            skille = ""
+            cost = ""
+            effect = noskill(v1, gamed)
+        elseif skill then
+            skille = skill.element
+            cost = skill.cost
+            effect = skill.effect
+            if k1 % 2 == 0 then
+                skille = styles.cost2 .. skille
+                cost = styles.cost2 .. cost
+                effect = styles.effect2 .. effect
+            else
+                skille = styles.cost1 .. skille
+                cost = styles.cost1 .. cost
+                effect = styles.effect1 .. effect
             end
+            skillcell = styles.skill .. displaySkillName(v1, skill)
+        end
+        result = result .. skillcell .. skille .. cost .. effect
+
+        if partner == "" or not partner then
+            partner = ""
+        end
+        if k1 % 2 == 0 then
+            result = result .. styles.cost2 .. partner
+        else
+            result = result .. styles.cost1 .. partner
         end
     end
     return result
@@ -972,11 +970,9 @@ local function renderComboAttacks(ctx, result)
     result = result .. styles.skill .. "Combo Attack" .. styles.skillc .. "Button Input" .. styles.skill3 .. '" colspan=2|Skills'
     for _, v1 in ipairs(mw.text.split(prop.cskills, "\n")) do
         skillcell = ""
-        local v_cnt = 0
-        for _ in string.gmatch(v1, "\\") do
-            v_cnt = v_cnt + 1
-        end
-        for k2, v2 in ipairs(mw.text.split(v1, "\\")) do
+        local comboParts = mw.text.split(v1, "\\")
+        local v_cnt = #comboParts - 1
+        for k2, v2 in ipairs(comboParts) do
             if k2 > 1 then
                 v2, skill = resolveSkill(data, v2)
                 local resv2, resdec

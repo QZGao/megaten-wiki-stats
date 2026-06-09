@@ -5,6 +5,8 @@ local Render = require("Module:Skills/Render")
 
 local p = {}
 
+-- Build a public #invoke wrapper that parses template arguments before calling an implementation.
+-- Used by the exported stats and row entry points for every supported game.
 local function makeInvokeFunction(funcName)
     -- makes a function that can be returned from #invoke, using
     -- [[Module:Arguments]].
@@ -14,6 +16,8 @@ local function makeInvokeFunction(funcName)
     end
 end
 
+-- Build rarity category wikitext for demon rarity labels.
+-- Used by the Dx2 stat renderer, including star-rarity demon categories.
 local function rarityCategory(rarity, gamen)
     if string.find(rarity, "★") ~= nil then
         local rarityNumber = math.floor(#rarity / 3)
@@ -28,6 +32,8 @@ local function rarityCategory(rarity, gamen)
     end
 end
 
+-- Emit a category only when rendering in the article namespace.
+-- Used by all game renderers that attach maintenance, race, alignment, boss, demon, Persona, or item categories.
 local function cate(catename)
     if mw.title.getCurrentTitle():inNamespace("") then
         return "[[Category:" .. catename .. "]]"
@@ -36,6 +42,8 @@ local function cate(catename)
     end
 end
 
+-- Render the standard invalid-skill or empty-skill error row.
+-- Used by skill table and row renderers for all games; Metaphor uses a wider synthesis row.
 local function noskill(skill, gamed)
     local result = "\n|-\n!"
     if gamed == "METAPHOR" then
@@ -52,6 +60,8 @@ local function noskill(skill, gamed)
     return result .. ".</strong>" .. cate("Articles with unrecognizable skill name for Module:Skills") .. '\n|-style="display:none"\n'
 end
 
+-- Preprocess raw wiki markup through the current frame.
+-- Used by P5S combo attack rendering for button-input markup.
 local function wikitext(text)
     return mw.getCurrentFrame():preprocess(text)
 end
@@ -189,6 +199,8 @@ local race_names = {
     ["Rebel God"] = { "Rebel God", exclusive = "Rebel God", catename = false },
 }
 
+-- Convert a race name into linked display text plus race categories.
+-- Used by top stat renderers across MT/KMT/SMT, Devil Summoner/Raidou, Persona, Devil Survivor, DemiKids, DDS, and related games.
 local function getRace(race, game, abbr)
     local result
     if not race or race == "" or race == "-" or race == "Unclassified" or race == "None" or race == "none" then
@@ -282,6 +294,8 @@ local function getRace(race, game, abbr)
     return result
 end
 
+-- Emit alignment categories without a nocat override.
+-- Used by older MT/SMT-style stat blocks where alignment categories are always attached.
 local function aligncat(align, gamen)
     local result
     if align == "Law" or align == "Light-Law" or align == "Neutral-Law" or align == "Dark-Law" then
@@ -298,6 +312,8 @@ local function aligncat(align, gamen)
     return result
 end
 
+-- Emit alignment categories while respecting nocat.
+-- Used by SMT/DDS-style stat blocks that allow category suppression.
 local function alignnocat(align, nocat, gamen)
     local result
     if nocat then
@@ -316,6 +332,8 @@ local function alignnocat(align, nocat, gamen)
     return result
 end
 
+-- Emit boss or demon categories while respecting nocat.
+-- Used by stat renderers where boss/demon categorization can be suppressed.
 local function bossdemonnocat(boss, nocat, gamen)
     local result
     if boss then
@@ -328,6 +346,8 @@ local function bossdemonnocat(boss, nocat, gamen)
     return result
 end
 
+-- Emit boss or demon categories.
+-- Used by stat renderers across most demon/enemy game layouts.
 local function bossdemoncat(boss, gamen)
     local result
     if boss then
@@ -338,6 +358,8 @@ local function bossdemoncat(boss, gamen)
     return result
 end
 
+-- Convert an Arcana or Persona 2 enemy group into linked display text plus categories.
+-- Used by Persona 1/2/3/4/5/P5X/PQ stat and summon rows.
 local function getArcana(arcana, game, gamen)
     local result
     if not arcana or arcana == "" or arcana == "-" or arcana == "Unclassified" or arcana == "None" or arcana == "none" then
@@ -372,7 +394,10 @@ local function getArcana(arcana, game, gamen)
     return result
 end
 
-local function bar(color, stat, ratio, cap, stat2, old, new) -- ratio is the length (in pixel) of each point. Cap times ratio equals max length of the stat bar.
+-- Render one numeric stat bar cell pair, including inherited and old/new comparison cases.
+-- Used by stat blocks with visible stat bars across SMT, Persona, Devil Summoner, Devil Survivor, Metaphor, and related games.
+local function bar(color, stat, ratio, cap, stat2, old, new)
+	-- ratio is the length (in pixel) of each point. Cap times ratio equals max length of the stat bar.
     local stat_st, stat_width
     if stat == "i" then
         stat = "i"
@@ -402,6 +427,8 @@ local function bar(color, stat, ratio, cap, stat2, old, new) -- ratio is the len
     end
 end
 
+-- Normalize template arguments into canonical property names from Module:Property_names.
+-- Used by the main stats entry point before dispatching any game renderer.
 local function get_prop(args)
     local prop = {}
     for k, v in pairs(require("Module:Property_names")) do
@@ -416,6 +443,8 @@ local function get_prop(args)
     return prop
 end
 
+-- Detect whether any configured stat key contains a renderable stat-bar value.
+-- Used by Persona 3/4/5/P5X top stat rendering to choose merged-row layout behavior.
 local function hasAnyStatBarValue(prop, statKeys)
     for _, key in ipairs(statKeys) do
         local value = prop[key]
@@ -426,12 +455,16 @@ local function hasAnyStatBarValue(prop, statKeys)
     return false
 end
 
+-- Test whether an optional value is present and not an explicit dash placeholder.
+-- Used by P5/P5X Arcana and reward-row hiding logic.
 local function hasFilledValue(value)
     return value ~= nil and value ~= "-"
 end
 
 p.stats = makeInvokeFunction("_stats")
 
+-- Main stats template implementation: normalize game aliases, load game data, and dispatch rendering.
+-- Supports every game handled by Template:Stats, including MT/KMT/SMT, Persona, Devil Summoner/Raidou, DemiKids, DDS, Devil Survivor, Metaphor, and spinoffs.
 function p._stats(args)
     local game = args[1] or args.game or args.Game or ""
     game = game:lower()
@@ -517,6 +550,8 @@ end
 
 p.row = makeInvokeFunction("_row")
 
+-- Public row-template implementation for legacy skill-row fragments.
+-- Used by all games that still call #invoke:row; row-specific game handling lives in Module:Skills/Row.
 function p._row(args)
     return Row.render(args, noskill, cate)
 end
