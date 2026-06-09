@@ -383,7 +383,7 @@ function p.renderTop(ctx, result)
         if prop.tech then
             prop.techc = data.skills[prop.tech]
             if not prop.techc then
-                alias = data.aliases[prop.tech]
+                local alias = data.aliases[prop.tech]
                 if alias then
                     prop.tech = alias
                     prop.techc = data.skills[prop.tech]
@@ -897,7 +897,7 @@ function p.renderTop(ctx, result)
         if not prop.etype then prop.etype = "" end
         result = result .. styles.table2 .. styles.h .. "|Class" .. styles.h .. "|Type" .. styles.h .. "|[[Race and species|" .. styles.spanc .. "Race]]" .. styles.h .. "|Level" .. styles.h .. "|HP" .. styles.h .. "|MP" .. styles.h .. "|Exp\n|-" .. styles.statlow .. prop.class .. styles.statlow .. prop.etype .. styles.statlow .. prop.race .. styles.statlow .. prop.level .. styles.statlow .. prop.hp .. styles.statlow .. prop.mp .. styles.statlow .. prop.xp .. "\n|}"
         result = result .. styles.table2 .. styles.h .. "width=16.67% |Attack" .. styles.h .. "width=16.67% |Guard" .. styles.h .. "width=16.67% |Magic" .. styles.h .. "width=16.67% |M Guard" .. styles.h .. "width=16.67% |Speed" .. styles.h .. "width=16.67% |Luck\n|-\n" .. styles.statlow .. prop.atk .. styles.statlow .. prop.def .. styles.statlow .. prop.magic .. styles.statlow .. prop.res .. styles.statlow .. prop.agl .. styles.statlow .. prop.luc .. "\n|}"
-        if prop.boss or race == "Boss" then
+        if prop.boss then
             result = result .. cate(gamen .. " Bosses")
         else
             if game == "dcbrp" then
@@ -920,7 +920,7 @@ function p.renderTop(ctx, result)
         if not prop.xp then prop.xp = "" end
         result = result .. styles.table2 .. styles.h .. "|Class" .. styles.h .. "|Element" .. styles.h .. "|[[Race and species|" .. styles.spanc .. "Type]]" .. styles.h .. "|Level" .. styles.h .. "|HP" .. styles.h .. "|MP" .. styles.h .. "|Exp\n|-" .. styles.statlow .. prop.class .. styles.statlow .. prop.etype .. styles.statlow .. prop.race .. styles.statlow .. prop.level .. styles.statlow .. prop.hp .. styles.statlow .. prop.mp .. styles.statlow .. prop.xp .. "\n|}"
         result = result .. styles.table2 .. styles.h .. 'width=16.67% title="Attack Power"|ATK' .. styles.h .. 'width=16.67% title="Defense"|DEF' .. styles.h .. 'width=16.67% title="Magic"|MGC' .. styles.h .. 'width=16.67% title="Resistance"|RES' .. styles.h .. 'width=16.67% title="Speed"|SPD' .. styles.h .. 'width=16.67% title="Luck"|LCK\n|-\n' .. styles.statlow .. prop.atk .. styles.statlow .. prop.def .. styles.statlow .. prop.magic .. styles.statlow .. prop.res .. styles.statlow .. prop.agl .. styles.statlow .. prop.luc .. "\n|}"
-        if prop.boss or race == "Boss" then
+        if prop.boss then
             if gameg == "childlight" then
                 result = result .. cate(getGames.games[gameg].name3 .. " Bosses")
             else

@@ -8,4 +8,4 @@ List of contributors can be found on the history page of [Module:Skills](https:/
 
 ## Licensing
 
-This codebase is licensed under the Creative Commons Attribution-Share Alike License 3.0 (Unported) (CC BY-SA).
+This codebase is licensed under the [Creative Commons Attribution-Share Alike License 3.0 (Unported) (CC BY-SA)](/LICENSE).

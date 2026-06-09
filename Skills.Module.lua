@@ -28,30 +28,6 @@ local function rarityCategory(rarity, gamen)
     end
 end
 
-local function createEquipTable(base)
-    local equiptable = {
-        ["sword"] = "=",
-        ["gun"] = "-",
-        ["ammo"] = "-",
-        ["accessory"] = "-",
-        ["head"] = "-",
-        ["body"] = "-",
-        ["arms"] = "-",
-        ["legs"] = "-",
-    }
-
-    local basetable = mw.text.split(base, "\n")
-
-    for k, v in ipairs(basetable) do
-        local kvPair = mx.text.split(v, "\\")
-        local key = string.lower(kvPair[1])
-
-        if equiptable[key] ~= nil then equiptable[key] = kvPair[2] end
-    end
-
-    return equiptable
-end
-
 local function cate(catename)
     if mw.title.getCurrentTitle():inNamespace("") then
         return "[[Category:" .. catename .. "]]"
@@ -416,7 +392,6 @@ local function bar(color, stat, ratio, cap, stat2, old, new) -- ratio is the len
     elseif stat_width ~= 0 then
         stat_width = tonumber(stat) * ratio
     end
-    inherit = "Inherit"
     if tostring(stat_st) == "+0" then stat_st = '<span style="color:#666">--</span>' end
     if stat == "i" then
         return "--\n|Inherit\n|-"

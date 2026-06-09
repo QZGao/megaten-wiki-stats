@@ -22,7 +22,7 @@ from urllib.request import Request, urlopen
 DEFAULT_API = "https://megamitensei.fandom.com/api.php"
 DEFAULT_LEFT = "https://megamitensei.fandom.com/wiki/User:Greykid/sandbox2"
 DEFAULT_RIGHT = "https://megamitensei.fandom.com/wiki/User:Greykid/sandbox3"
-USER_AGENT = "StatsModuleRenderCompare/1.0"
+USER_AGENT = "StatsModuleRenderCompare/1.0 (https://github.com/QZGao/megaten-wiki-stats/blob/main/compare_sandbox_render.py)"
 
 
 def title_from_page_arg(value: str) -> str:
