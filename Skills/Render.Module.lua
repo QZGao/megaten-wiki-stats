@@ -38,10 +38,8 @@ function p.render(ctx)
     local data = ctx.data
     local game = ctx.game
     local gameg = ctx.gameg
-    local gamen = ctx.gamen
     local gamegn = ctx.gamegn
     local gamed = ctx.gamed
-    local cate = ctx.cate
     local noskill = ctx.noskill
     local wikitext = ctx.wikitext
 
@@ -90,13 +88,10 @@ function p.render(ctx)
     end
     if gameg == "p3re" and prop.ptraits then
         if string.find(prop.ptraits, "\n") then
-            local pt_cnt = 0
-            for k in string.gmatch(prop.ptraits, "\n") do
-                pt_cnt = pt_cnt + 1
-            end
+            local traitRows = mw.text.split(prop.ptraits, "\n")
             result = result .. styles.table2
-            result = result .. styles.h .. 'width=100px rowspan="' .. (pt_cnt + 1) .. '"|[[Theurgy|' .. styles.spanc .. "Characteristics</span>]]" .. styles.order
-            for k, v in ipairs(mw.text.split(prop.ptraits, "\n")) do
+            result = result .. styles.h .. 'width=100px rowspan="' .. #traitRows .. '"|[[Theurgy|' .. styles.spanc .. "Characteristics</span>]]" .. styles.order
+            for k, v in ipairs(traitRows) do
                 if k > 1 then result = result .. styles.order2 end
                 local traitLine = mw.text.split(v, "\\"), traitName, traitType
                 if #traitLine > 1 then
@@ -141,13 +136,10 @@ function p.render(ctx)
     result = Drops.renderPersona4Rewards(ctx, result)
     if gameg == "p5r" and prop.ptraits then
         if string.find(prop.ptraits, "\\") then
-            local pt_cnt = 0
-            for k in string.gmatch(prop.ptraits, "\\") do
-                pt_cnt = pt_cnt + 1
-            end
+            local traitRows = mw.text.split(prop.ptraits, "\\")
             result = result .. styles.table2
-            result = result .. styles.h .. 'width=100px rowspan="' .. (pt_cnt + 1) .. '"|[[Persona Traits|' .. styles.spanc .. "Persona Trait</span>]]" .. styles.order
-            for k, v in ipairs(mw.text.split(prop.ptraits, "\\")) do
+            result = result .. styles.h .. 'width=100px rowspan="' .. #traitRows .. '"|[[Persona Traits|' .. styles.spanc .. "Persona Trait</span>]]" .. styles.order
+            for k, v in ipairs(traitRows) do
                 if k > 1 then result = result .. styles.order2 end
                 local ptrait = data.traits[v]
                 if not ptrait then

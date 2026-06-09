@@ -425,10 +425,12 @@ function p.renderPost(ctx, result)
             end
             result = result .. styles.table2 .. styles.h .. 'title="Sword"|Sw' .. styles.h .. prop.name_Rn .. styles.h .. 'title="Strike"|Sk' .. styles.h .. 'title="Thrown"|Th' .. styles.h .. prop.name_Hv .. styles.h .. 'style="background:#8E283D" title="Fire"|' .. prop.Fi .. styles.h .. 'style="background:#8E283D" title="Water"|' .. prop.Wt .. styles.h .. 'style="background:#8E283D" title="Wind"|' .. prop.Wi .. styles.h .. 'style="background:#8E283D" title="Earth"|' .. prop.Er .. styles.h .. 'title="Ice"|Ic' .. styles.h .. prop.name_El .. styles.h .. 'title="Nuclear"|Nc' .. styles.h .. prop.name_Li .. styles.h .. 'title="Dark"|Dk' .. styles.h .. 'title="Almighty"|Al' .. styles.h .. 'title="Nerve"|Nr' .. styles.h .. 'title="Mind"|Mn\n|-'
         end
-        if require("Module:Skills/" .. gameg .. "/res").restypes[prop.restype] == nil then
+        local restypes = require("Module:Skills/" .. gameg .. "/res").restypes
+        local restype = restypes[prop.restype]
+        if restype == nil then
             result = result .. '\n|colspan=16 align=center style="color:#f00;font-size:120%;font-weight:bold"|Invalid value of "' .. prop.restype .. '" for restype. Correct value or edit [[Module:Skills/' .. gameg .. "/res]]."
         else
-            for i, v in ipairs(require("Module:Skills/" .. gameg .. "/res").restypes[prop.restype]) do
+            for i, v in ipairs(restype) do
                 if game == "p1" then
                     if i > 14 then break end
                     result = result .. resoutput(v, 4, gameg)
@@ -444,7 +446,7 @@ function p.renderPost(ctx, result)
         result = result .. "\n|}"
         if game == "p1" then
             result = result .. styles.table2 .. '\n|-\n!style="background:#a9a9a9" title="Element" colspan="4"|\n!style="background:#898989" title="Force" colspan="4"|\n!style="background:#a9a9a9" title="Light" colspan="2"|\n!style="background:#898989" title="Dark" colspan="3"|\n!style="background:#a9a9a9" title="Special" colspan="1"|\n|-' .. styles.h .. 'width="7.12%" title="Element"|<abbr title="Fire">Fi</abbr>' .. styles.h .. 'width="7.12%" title="Element"|<abbr title="Ice">Ic</abbr>' .. styles.h .. 'width="7.12%" title="Element"|<abbr title="Wind">Wi</abbr>' .. styles.h .. 'width="7.12%" title="Element"|<abbr title="Earth">Er</abbr>' .. styles.h .. 'style="background:#898989;width:7.12%" title="Force"|<abbr title="Electricity">El</abbr>' .. styles.h .. 'style="background:#898989;width:7.12%" title="Force"|<abbr title="Nuclear">Nc</abbr>' .. styles.h .. 'style="background:#898989;width:7.12%" title="Force"|<abbr title="Blast">Bl</abbr>' .. styles.h .. 'style="background:#898989;width:7.12%" title="Force"|<abbr title="Gravity">Gr</abbr>' .. styles.h .. 'title="Light"|<abbr title="Expel">Ex</abbr>' .. styles.h .. 'title="Light"|<abbr title="Miracle">Mi</abbr>' .. styles.h .. 'style="background:#898989" title="Dark"|<abbr title="Death">De</abbr>' .. styles.h .. 'style="background:#898989" title="Dark"|<abbr title="Curse">Cu</abbr>' .. styles.h .. 'style="background:#898989;width:7.12%" title="Dark (Ailments)"|<abbr title="Nerve">Nr</abbr>' .. styles.h .. 'width="7.12%" title="Special"|<abbr title="Resistance to Hieroglyphein">???</abbr>\n|-'
-            for i, v in ipairs(require("Module:Skills/" .. gameg .. "/res").restypes[prop.restype]) do
+            for i, v in ipairs(restype) do
                 if i < 15 then
                 else
                     result = result .. resoutput(v, 4, gameg)

@@ -1,81 +1,91 @@
-# Skills Module Refactor Plan
+# Skills Module Cleanup Plan
 
-## Target Module Structure
+## Priorities
 
-- `Module:Skills`
-  - Public entry points.
-  - Argument parsing.
-  - Game alias normalization.
-  - Property loading.
-  - Context creation.
-  - Shared helper wiring.
+- Preserve exact rendered output unless a behavior change is explicitly requested.
+- Prefer efficiency improvements over purely aesthetic refactors.
+- Keep cleanup batches small enough that sandbox2 vs sandbox3 exact render parity can identify regressions quickly.
+- Avoid distant predicate helpers and one-use boolean locals unless they remove real repeated work.
+- Keep helpers close to the renderer that uses them.
 
-- `Module:Skills/Style`
-  - CSS and wiki-table style strings.
-  - Builds a fresh per-render style table so render calls do not mutate shared global style state.
+## Cleanup Order
 
-- `Module:Skills/Row`
-  - Reusable row and cell render utilities.
-  - Likely home for the implementation behind `p._row`, while `p.row` remains exposed from `Module:Skills` for compatibility.
+### 1. Low-risk efficiency cleanup
 
-- `Module:Skills/Render`
-  - Central render coordinator.
-  - Owns wrapper table start/end and miscellaneous render sections that do not justify their own module.
-  - Calls `Stats`, `Affinity`, `Drops`, and `SkillTable` in legacy output order.
+- In `Skills/Render/Affinity.Module.lua`, load `Module:Skills/<game>/res` once inside the `restype` branch and reuse the local `restypes` table.
+- In `Skills/Render.Module.lua`, split P3R Theurgy characteristics and P5R Persona traits once, then reuse the resulting table for row count and iteration.
+- Remove unused local bindings from `Skills/Render.Module.lua`.
+- Remove unused context fields passed from `Skills.Module.lua` after confirming no child module consumes them.
 
-- `Module:Skills/Render/Stats`
-  - Main stat/header blocks.
-  - Race, arcana, level, HP/MP/SP, stat bars, and game-specific top stat layouts.
+Verification:
 
-- `Module:Skills/Render/Affinity`
-  - Element and weapon affinity tables.
-  - Resistance/weakness/block/absorb/reflect sections.
-  - Resistance formatting helpers such as fraction and percent output, if they are only used here.
+- Run Lua parse checks.
+- Run `git diff --check`.
+- Upload changed modules.
+- Run sandbox exact HTML comparison.
 
-- `Module:Skills/Render/Drops`
-  - EXP, Yen, drops, negotiation items, material cards, tarot cards, and other loot/reward sections.
+### 2. Remove dead or accidental code
 
-- `Module:Skills/Render/SkillTable`
-  - Existing skill-list rendering.
-  - Normal skills, fusion/synthesis/combo skills, passive skills, auction skills, unknown powers, combo attacks, and power sections.
+- Remove unused `createEquipTable` from `Skills.Module.lua` if still unreferenced.
+- Remove its context plumbing.
+- Audit accidental globals, especially `inherit = "Inherit"` in `bar`.
+- Audit bare `race == "Boss"` checks in `Skills/Render/Stats.Module.lua`.
 
-## Local File Names
+Notes:
 
-- `Skills.Module.lua`
-- `Skills/Style.Module.lua`
-- `Skills/Row.Module.lua`
-- `Skills/Render.Module.lua`
-- `Skills/Render/Stats.Module.lua`
-- `Skills/Render/Affinity.Module.lua`
-- `Skills/Render/Drops.Module.lua`
-- `Skills/Render/SkillTable.Module.lua`
+- Accidental global fixes can technically alter behavior. Keep them isolated from unrelated cleanup.
+- If a questionable legacy branch may depend on a bug, verify with sandbox output before continuing.
 
-## Implementation Order
+### 3. SkillTable parsing efficiency
 
-1. Add `Skills/Style.Module.lua` and move style construction only.
-2. Add `Skills/Row.Module.lua` and move low-level row helpers plus `_row` internals.
-3. Add `Skills/Render.Module.lua` as the central render coordinator.
-4. Extract top stat rendering into `Skills/Render/Stats.Module.lua`.
-5. Extract affinity/resistance rendering into `Skills/Render/Affinity.Module.lua`.
-6. Extract drop/reward rendering into `Skills/Render/Drops.Module.lua`.
-7. Clean inside each module only after exact render parity passes.
+- In `Skills/Render/SkillTable.Module.lua`, replace repeated `mw.text.split(v1 .. "\\", "\\")` patterns when only the first two parts are needed.
+- Avoid table allocation per skill row where direct string matching can extract `skill` and `level` or metadata.
+- Keep row renderers separate enough that game-specific behavior remains visible.
 
-## Refactor Rules
+Verification:
 
-- Preserve behavior first. Initial splits should be mostly mechanical moves.
-- Preserve legacy output order.
-- Avoid one-use boolean locals when an inline condition is clearer.
-- Avoid distant `uses...` predicate helpers.
-- Do not create vague catch-all modules such as `Core`, `Extra`, or `DetailTable`.
-- Move helpers into the module that owns their use. If multiple modules need a helper, wire it explicitly through context before creating another shared module.
-- Keep `Module:Skills` as the stable public entry point throughout the refactor.
+- Compare after each renderer family, not after rewriting the whole file.
 
-## Verification
+### 4. Persona top stat block cleanup
 
-After each local split:
+- In `Skills/Render/Stats.Module.lua`, clean the Persona 3/4/5/P5X top stat block.
+- Remove the per-render table allocation in `hasAnyStatBarValue(prop, { "str", "magic", "vit", "agl", "luc" })`.
+- Unify duplicated header/value assembly between stat-bar and no-stat-bar branches.
+- Keep the pending top stat merge behavior unchanged.
+
+Verification:
+
+- Use P3, P4, P5, P5X, and no-stat-bar cases in the sandbox comparison pages.
+
+### 5. Stats render dispatch
+
+- Convert the top-level independent `if game...` / `if gameg...` chain in `Skills/Render/Stats.Module.lua` into a mutually exclusive dispatch where safe.
+- Prioritize high-traffic game families first.
+- Do not split into many new files unless performance or maintainability clearly benefits.
+
+Notes:
+
+- This is the largest runtime cleanup and the highest parity risk.
+- Preserve legacy ordering for any branch that can intentionally emit alongside another branch.
+
+### 6. Affinity defaulting cleanup
+
+- Reduce repeated `if not prop.x then prop.x = "-" end` clusters where a nearby local table loop is clearer and does not hide behavior.
+- Keep default values local to the game branch that owns them.
+- Avoid a shared defaulting helper unless multiple branches truly share the same field set and default value.
+
+### 7. Row renderer cleanup
+
+- Consider replacing the `Skills/Row.Module.lua` row-code `elseif` chain with a local row-handler map.
+- Keep this late because `#invoke:row` is smaller and lower impact than full stats rendering.
+
+## Ongoing Verification
+
+After each local cleanup batch:
 
 1. Run Lua parsing checks.
 2. Run `git diff --check`.
 3. Update the corresponding on-wiki sandbox modules.
 4. Run the sandbox2 vs sandbox3 exact HTML comparison.
 
+Do not begin the next cleanup batch until exact render parity passes.

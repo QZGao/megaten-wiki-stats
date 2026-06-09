@@ -525,7 +525,6 @@ function p._stats(args)
         gamegn = gamegn,
         gamed = gamed,
         rarityCategory = rarityCategory,
-        createEquipTable = createEquipTable,
         cate = cate,
         noskill = noskill,
         wikitext = wikitext,
