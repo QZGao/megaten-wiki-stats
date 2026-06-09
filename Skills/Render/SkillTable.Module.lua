@@ -1,6 +1,97 @@
 local p = {}
 
-function p.render(ctx, result)
+local function resolveSkill(data, code, source)
+    source = source or data.skills
+    local skill = source[code]
+    if skill then
+        return code, skill
+    end
+
+    local alias = data.aliases[code]
+    if alias then
+        return alias, source[alias]
+    end
+
+    return code, nil
+end
+
+local function formatTaggedSkillEffect(skill, gameData)
+    local effect = skill.effect
+    if skill.combo then
+        effect = '<div style="background:' .. gameData.colorbg .. ';border-radius:5px;float:left;margin-right:5px">Combo</div> ' .. effect
+    elseif skill.smirk then
+        effect = effect .. ' <span style="background:' .. gameData.statb .. ';border-radius:5px;padding:3px">Smirk</span> ' .. skill.smirk
+    end
+    return effect
+end
+
+local function formatExpandedSkillEffect(skill, gameData)
+    local effect = skill.effect
+
+    if skill.smirk then effect = effect .. ' <span style="background:' .. gameData.statb .. ';border-radius:5px;padding:3px">Smirk</span> ' .. skill.smirk end
+    if skill.chaineffect then
+        for index, child in ipairs(skill.chaineffect) do
+            effect = effect .. string.format('\n<span style="background:' .. gameData.colorb .. ';border-radius:5px;padding:3px;font-weight:bold;">%s:</span>', child[1]) .. " " .. child[2] .. "\n"
+        end
+    end
+    if skill.conditional then
+        for index, child in ipairs(skill.conditional) do
+            effect = effect .. string.format('\n<span style="background:' .. gameData.colorb .. ';border-radius:5px;padding:3px;font-weight:bold;">%s:</span>', child[1]) .. " " .. child[2] .. "\n"
+            if child.chaineffect then
+                for index, value in ipairs(child.chaineffect) do
+                    effect = effect .. string.format('<br><span style="background:' .. gameData.colorb .. ';border-radius:5px;padding:3px;font-weight:bold;">%s:</span>', value[1]) .. " " .. value[2] .. "\n"
+                end
+            end
+        end
+    end
+    if skill.boostlevel then
+        for level, value in ipairs(skill.boostlevel) do
+            if string.len(value) > 0 then effect = effect .. string.format('<br><span style="background:' .. gameData.colorb .. ';border-radius:5px;padding:3px;font-weight:bold;">Level %d:</span>', level - 1) .. " " .. value end
+        end
+    end
+
+    return effect
+end
+
+local function renderDefaultSkills(ctx, result)
+    local styles = ctx.styles
+    local prop = ctx.prop
+    local data = ctx.data
+    local gamegn = ctx.gamegn
+    local gamed = ctx.gamed
+    local noskill = ctx.noskill
+    local skill, skillcell, cost, effect
+
+    result = result .. styles.table2 .. styles.h .. "colspan=3|[[List of " .. gamegn .. " Skills|" .. styles.spanc .. "Default Skills</span>]]" .. styles.skill .. "Skill" .. styles.skillc .. "Cost" .. styles.skillc .. "Effect"
+    for k, v in ipairs(mw.text.split(prop.dskills, "\n")) do
+        v, skill = resolveSkill(data, v)
+        if v == "" then
+            skillcell = ""
+            cost = ""
+            effect = noskill()
+        elseif not skill then
+            skillcell = ""
+            cost = ""
+            effect = noskill(v, gamed)
+        elseif skill then
+            cost = skill.cost
+            effect = skill.effect
+            if k % 2 == 0 then
+                cost = styles.cost2 .. cost
+                effect = styles.effect2 .. effect
+            else
+                cost = styles.cost1 .. cost
+                effect = styles.effect1 .. effect
+            end
+            if skill.name then v = skill.name end
+            skillcell = styles.skill .. v
+        end
+        result = result .. skillcell .. cost .. effect
+    end
+    return result .. "\n|}"
+end
+
+local function renderNormalSkills(ctx, result)
     local getGames = ctx.getGames
     local styles = ctx.styles
     local prop = ctx.prop
@@ -10,81 +101,36 @@ function p.render(ctx, result)
     local gamegn = ctx.gamegn
     local gamed = ctx.gamed
     local noskill = ctx.noskill
-    local wikitext = ctx.wikitext
-    local skill, alias, skillcell, skille, cost, effect, pre, range, power, target
-    if prop.dskills then
-        result = result .. styles.table2 .. styles.h .. "colspan=3|[[List of " .. gamegn .. " Skills|" .. styles.spanc .. "Default Skills</span>]]" .. styles.skill .. "Skill" .. styles.skillc .. "Cost" .. styles.skillc .. "Effect"
-        for k, v in ipairs(mw.text.split(prop.dskills, "\n")) do
-            skill = data.skills[v]
-            if not skill then
-                alias = data.aliases[v]
-                if alias then
-                    v = alias
-                    skill = data.skills[v]
-                end
-            end
-            if v == "" then
-                skillcell = ""
-                cost = ""
-                effect = noskill()
-            elseif not skill then
-                skillcell = ""
-                cost = ""
-                effect = noskill(v, gamed)
-            elseif skill then
-                cost = skill.cost
-                effect = skill.effect
-                if k % 2 == 0 then
-                    cost = styles.cost2 .. cost
-                    effect = styles.effect2 .. effect
-                else
-                    cost = styles.cost1 .. cost
-                    effect = styles.effect1 .. effect
-                end
-                if skill.name then v = skill.name end
-                skillcell = styles.skill .. v
-            end
-            result = result .. skillcell .. cost .. effect
-        end
-        result = result .. "\n|}"
-    end
+    local skill, skillcell, skille, cost, effect, range, power, target
 
     -- List of skills starts here
-    if prop.skills then
-        -- List of skills table header
-        result = result .. styles.table2h
-        if game == "mt1" or game == "mt2" or game == "kmt1" or game == "kmt2" then
-            result = result .. '"' .. styles.h .. "colspan=4|[[List of Megami Tensei Spells|" .. styles.spanc .. "List of Spells</span>]]"
-        elseif game == "smtim" then
-            result = result .. 'mw-collapsible mw-collapsed"' .. styles.h .. "colspan=4|[[List of " .. gamegn .. " Skills|" .. styles.spanc .. "Learned Skills</span>]]"
-        elseif gameg == "smtsj" and not (prop.enemy or prop.boss) then
-            result = result .. '"' .. styles.h .. "colspan=3|[[List of " .. gamegn .. " Skills|" .. styles.spanc .. "Natural Skills</span>]]"
-        elseif gameg == "ab" then
-            result = result .. '"' .. styles.h .. "colspan=7|[[List of " .. gamegn .. " Skills#Magic|" .. styles.spanc .. "Natural Skills</span>]]"
-        elseif gameg == "majin1" then
-            result = result .. '"' .. styles.h .. "colspan=7|[[List of " .. gamegn .. " Skills|" .. styles.spanc .. "Magic Skills</span>]]"
-        elseif gameg == "majin2" then
-            result = result .. '"' .. styles.h .. "colspan=6|[[List of " .. gamegn .. " Skills|" .. styles.spanc .. "List of Skills</span>]]"
-        elseif gameg == "p5" or gameg == "p5r" or gameg == "p5s" or gameg == "p5x" then
-            result = result .. '"\n!colspan=4 style="background-color: ' .. getGames.games[gameg].colorb .. ";background: linear-gradient(120deg, " .. getGames.games[gameg].colorb .. " 42%, #000 42.1%, #000 43%, #fff 43.1%, #fff 57%, #000 57.1%, #000 58%, " .. getGames.games[gameg].colorb .. ' 58.1%"|[[List of ' .. gamegn .. ' Skills|<span style="color:black;text-shadow:-3px 3px 3px #0ff">List of Skills</span>]]'
-        elseif gameg == "desu1" or gameg == "desu2" then
-            result = result .. '"' .. styles.h .. "colspan=3|[[List of " .. gamegn .. " Skills|" .. styles.spanc .. "Command Skills</span>]]"
-        else
-            result = result .. '"' .. styles.h .. "colspan=4|[[List of " .. gamegn .. " Skills|" .. styles.spanc .. "List of Skills</span>]]"
-        end
+    -- List of skills table header
+    result = result .. styles.table2h
+    if game == "mt1" or game == "mt2" or game == "kmt1" or game == "kmt2" then
+        result = result .. '"' .. styles.h .. "colspan=4|[[List of Megami Tensei Spells|" .. styles.spanc .. "List of Spells</span>]]"
+    elseif game == "smtim" then
+        result = result .. 'mw-collapsible mw-collapsed"' .. styles.h .. "colspan=4|[[List of " .. gamegn .. " Skills|" .. styles.spanc .. "Learned Skills</span>]]"
+    elseif gameg == "smtsj" and not (prop.enemy or prop.boss) then
+        result = result .. '"' .. styles.h .. "colspan=3|[[List of " .. gamegn .. " Skills|" .. styles.spanc .. "Natural Skills</span>]]"
+    elseif gameg == "ab" then
+        result = result .. '"' .. styles.h .. "colspan=7|[[List of " .. gamegn .. " Skills#Magic|" .. styles.spanc .. "Natural Skills</span>]]"
+    elseif gameg == "majin1" then
+        result = result .. '"' .. styles.h .. "colspan=7|[[List of " .. gamegn .. " Skills|" .. styles.spanc .. "Magic Skills</span>]]"
+    elseif gameg == "majin2" then
+        result = result .. '"' .. styles.h .. "colspan=6|[[List of " .. gamegn .. " Skills|" .. styles.spanc .. "List of Skills</span>]]"
+    elseif gameg == "p5" or gameg == "p5r" or gameg == "p5s" or gameg == "p5x" then
+        result = result .. '"\n!colspan=4 style="background-color: ' .. getGames.games[gameg].colorb .. ";background: linear-gradient(120deg, " .. getGames.games[gameg].colorb .. " 42%, #000 42.1%, #000 43%, #fff 43.1%, #fff 57%, #000 57.1%, #000 58%, " .. getGames.games[gameg].colorb .. ' 58.1%"|[[List of ' .. gamegn .. ' Skills|<span style="color:black;text-shadow:-3px 3px 3px #0ff">List of Skills</span>]]'
+    elseif gameg == "desu1" or gameg == "desu2" then
+        result = result .. '"' .. styles.h .. "colspan=3|[[List of " .. gamegn .. " Skills|" .. styles.spanc .. "Command Skills</span>]]"
+    else
+        result = result .. '"' .. styles.h .. "colspan=4|[[List of " .. gamegn .. " Skills|" .. styles.spanc .. "List of Skills</span>]]"
+    end
 
-        -- List of skills table content
+    -- List of skills table content
         if game == "mt1" or game == "mt2" or gameg == "giten" or gameg == "smtsj" or gameg == "smtds" or gameg == "sh" or gameg == "childred" or gameg == "childblack" or gameg == "childps" or gameg == "childblack" or gameg == "childfire" or gameg == "childice" or gameg == "desu1" or gameg == "desu2" then
             result = result .. '\n|-style="border:0"\n|style="padding:0;width:33%"|\n|style="padding:0;width:33%"|\n|style="padding:0;width:33%"|'
             for k, v in ipairs(mw.text.split(prop.skills, "\n")) do
-                skill = data.skills[v]
-                if not skill then
-                    alias = data.aliases[v]
-                    if alias then
-                        v = alias
-                        skill = data.skills[v]
-                    end
-                end
+                v, skill = resolveSkill(data, v)
                 if v == "" or v == "-" or v == "--" then
                     skillcell = ""
                 elseif not skill then
@@ -108,14 +154,7 @@ function p.render(ctx, result)
         elseif gameg == "majin2" then
             result = result .. styles.skill .. "Skill" .. styles.skillc .. "Power" .. styles.skillc .. "Range" .. styles.skillc .. "Cost" .. styles.skillc .. "Target" .. styles.skillc .. "Effect"
             for k, v in ipairs(mw.text.split(prop.skills, "\n")) do
-                skill = data.skills[v]
-                if not skill then
-                    alias = data.aliases[v]
-                    if alias then
-                        v = alias
-                        skill = data.skills[v]
-                    end
-                end
+                v, skill = resolveSkill(data, v)
                 if v == "" then
                     skillcell = ""
                     power = ""
@@ -175,14 +214,7 @@ function p.render(ctx, result)
         elseif (game == "kmt1" and not (prop.enemy or prop.boss)) or (game == "kmt2" and not (prop.enemy or prop.boss)) or (gameg == "smt1" and not (prop.enemy or prop.boss)) or (gameg == "smt2" and not (prop.enemy or prop.boss)) or (gameg == "smtif" and not (prop.enemy or prop.boss)) or (gameg == "smt3" and (prop.enemy or prop.boss)) or ((gameg == "smt4a" or gameg == "smt5" or gameg == "smt5v" or gameg == "sh2") and prop.guest == "2") or (game == "lb1" and not (prop.enemy or prop.boss)) or (game == "lb2" and not (prop.enemy or prop.boss)) then -- skill - cost - effect
             result = result .. styles.skill .. "Skill" .. styles.skillc .. "Cost" .. styles.skillc .. "Effect"
             for k, v in ipairs(mw.text.split(prop.skills, "\n")) do
-                skill = data.skills[v]
-                if not skill then
-                    alias = data.aliases[v]
-                    if alias then
-                        v = alias
-                        skill = data.skills[v]
-                    end
-                end
+                v, skill = resolveSkill(data, v)
                 if v == "" then
                     skillcell = ""
                     cost = ""
@@ -221,21 +253,7 @@ function p.render(ctx, result)
                     if k2 > 2 then
                         break
                     elseif k2 % 2 == 1 then
-                        skill = data.skills[v2]
-                        if not skill then
-                            alias = data.aliases[v2]
-                            if alias then
-                                v2 = alias
-                                skill = data.skills[v2]
-                            end
-                        end
-                        if skill then
-                            if skill.combo then
-                                skill.effect = '<div style="background:' .. getGames.games[gameg].colorbg .. ';border-radius:5px;float:left;margin-right:5px">Combo</div> ' .. skill.effect
-                            elseif skill.smirk then
-                                skill.effect = skill.effect .. ' <span style="background:' .. getGames.games[gameg].statb .. ';border-radius:5px;padding:3px">Smirk</span> ' .. skill.smirk
-                            end
-                        end
+                        v2, skill = resolveSkill(data, v2)
                         if v2 == "" then
                             skillcell = ""
                             effect = noskill()
@@ -243,10 +261,11 @@ function p.render(ctx, result)
                             skillcell = ""
                             effect = noskill(v2, gamed)
                         elseif skill then
+                            local effectText = formatTaggedSkillEffect(skill, getGames.games[gameg])
                             if k1 % 2 == 0 then
-                                effect = styles.effect2 .. skill.effect
+                                effect = styles.effect2 .. effectText
                             else
-                                effect = styles.effect1 .. skill.effect
+                                effect = styles.effect1 .. effectText
                             end
                             if skill.name then v2 = skill.name end
                             skillcell = styles.skill .. v2
@@ -266,14 +285,7 @@ function p.render(ctx, result)
         elseif gameg == "dcbrb" or gameg == "childlight" or gameg == "childwhite" then -- skill - element - cost - effect
             result = result .. styles.skill .. "Skill" .. styles.skillc .. "Element" .. styles.skillc .. "Cost" .. styles.skillc .. "Effect"
             for k, v in ipairs(mw.text.split(prop.skills, "\n")) do
-                skill = data.skills[v]
-                if not skill then
-                    alias = data.aliases[v]
-                    if alias then
-                        v = alias
-                        skill = data.skills[v]
-                    end
-                end
+                v, skill = resolveSkill(data, v)
                 if v == "" then
                     skillcell = ""
                     skille = ""
@@ -322,14 +334,7 @@ function p.render(ctx, result)
                         end
                         result = result .. styles.skill .. v2
                     elseif k2 % 2 == 0 then
-                        skill = data.skills[v2]
-                        if not skill then
-                            alias = data.aliases[v2]
-                            if alias then
-                                v2 = alias
-                                skill = data.skills[v2]
-                            end
-                        end
+                        v2, skill = resolveSkill(data, v2)
                         if v2 == "" then
                             skillcell = ""
                             cost = ""
@@ -388,14 +393,7 @@ function p.render(ctx, result)
         elseif gameg == "majin1" then -- skill - cost - power - range - target - effect
             result = result .. styles.skill .. "Skill" .. styles.skillc .. "Cost" .. styles.skillc .. "Power" .. styles.skillc .. "Range" .. styles.skillc .. "Target" .. styles.skillc .. "Effect"
             for k, v in ipairs(mw.text.split(prop.skills, "\n")) do
-                skill = data.skills[v]
-                if not skill then
-                    alias = data.aliases[v]
-                    if alias then
-                        v = alias
-                        skill = data.skills[v]
-                    end
-                end
+                v, skill = resolveSkill(data, v)
                 if v == "" then
                     skillcell = ""
                     cost = ""
@@ -445,14 +443,7 @@ function p.render(ctx, result)
                     if k2 > 2 then
                         break
                     elseif k2 % 2 == 1 then -- this checks level (false) or skill name (true) divided by the backslash.
-                        skill = data.skills[v2] -- now v2 represents skill name.
-                        if not skill then
-                            alias = data.aliases[v2]
-                            if alias then
-                                v2 = alias
-                                skill = data.skills[v2]
-                            end
-                        end
+                        v2, skill = resolveSkill(data, v2) -- now v2 represents skill name.
                         if v2 == "" then
                             skillcell = ""
                             cost = ""
@@ -480,33 +471,13 @@ function p.render(ctx, result)
                                     cost = '<span style="color:' .. getGames.games[gameg].mp2 .. '">' .. skill.cost .. "</span>" -- tints pink for magic skill
                                 end
                             end
-                            if skill.smirk then skill.effect = skill.effect .. ' <span style="background:' .. getGames.games[gameg].statb .. ';border-radius:5px;padding:3px">Smirk</span> ' .. skill.smirk end
-                            if skill.chaineffect then
-                                for index, child in ipairs(skill.chaineffect) do
-                                    skill.effect = skill.effect .. string.format('\n<span style="background:' .. getGames.games[gameg].colorb .. ';border-radius:5px;padding:3px;font-weight:bold;">%s:</span>', child[1]) .. " " .. child[2] .. "\n"
-                                end
-                            end
-                            if skill.conditional then
-                                for index, child in ipairs(skill.conditional) do
-                                    skill.effect = skill.effect .. string.format('\n<span style="background:' .. getGames.games[gameg].colorb .. ';border-radius:5px;padding:3px;font-weight:bold;">%s:</span>', child[1]) .. " " .. child[2] .. "\n"
-                                    if child.chaineffect then
-                                        for index, value in ipairs(child.chaineffect) do
-                                            skill.effect = skill.effect .. string.format('<br><span style="background:' .. getGames.games[gameg].colorb .. ';border-radius:5px;padding:3px;font-weight:bold;">%s:</span>', value[1]) .. " " .. value[2] .. "\n"
-                                        end
-                                    end
-                                end
-                            end
-                            if skill.boostlevel then
-                                for level, value in ipairs(skill.boostlevel) do
-                                    if string.len(value) > 0 then skill.effect = skill.effect .. string.format('<br><span style="background:' .. getGames.games[gameg].colorb .. ';border-radius:5px;padding:3px;font-weight:bold;">Level %d:</span>', level - 1) .. " " .. value end
-                                end
-                            end
+                            local effectText = formatExpandedSkillEffect(skill, getGames.games[gameg])
                             if k1 % 2 == 0 then
                                 cost = styles.cost2 .. cost
-                                effect = styles.effect2 .. skill.effect
+                                effect = styles.effect2 .. effectText
                             else
                                 cost = styles.cost1 .. cost
-                                effect = styles.effect1 .. skill.effect
+                                effect = styles.effect1 .. effectText
                             end
                             if skill.name then v2 = skill.name end
                             skillcell = styles.skill .. v2
@@ -553,10 +524,20 @@ function p.render(ctx, result)
                 end
             end
         end
-        result = result .. "\n|}"
-    end
-    if prop.fskills then
-        result = result .. styles.table2 .. styles.h
+    return result .. "\n|}"
+end
+
+local function renderFusionSkills(ctx, result)
+    local styles = ctx.styles
+    local prop = ctx.prop
+    local data = ctx.data
+    local gameg = ctx.gameg
+    local gamegn = ctx.gamegn
+    local gamed = ctx.gamed
+    local noskill = ctx.noskill
+    local skill, skillcell, skille, cost, effect
+
+    result = result .. styles.table2 .. styles.h
         if gameg == "metaphor" then
             result = result .. 'colspan="6"'
         else
@@ -565,14 +546,7 @@ function p.render(ctx, result)
         if gameg == "p2is" or gameg == "p2ep" then
             result = result .. "|[[List of " .. gamegn .. " Fusion Spells|" .. styles.spanc .. "Unique Fusion Spells</span>]]" .. styles.skill .. "Skill" .. styles.skillc .. "Effect" .. styles.skillc .. "Order/Skill/Persona"
             for k, v in ipairs(mw.text.split(prop.fskills, "\n")) do
-                skill = data.skills[v]
-                if not skill then
-                    alias = data.aliases[v]
-                    if alias then
-                        v = alias
-                        skill = data.skills[v]
-                    end
-                end
+                v, skill = resolveSkill(data, v)
                 if v == "" then
                     skillcell = ""
                     cost = ""
@@ -610,14 +584,7 @@ function p.render(ctx, result)
         elseif gameg == "metaphor" then
             result = result .. "|[[List of Metaphor: ReFantazio Skills#Synthesis Skills|" .. styles.spanc .. "Synthesis Skills</span>]]" .. styles.skill .. "Skill" .. styles.skillc .. "Cost" .. styles.skillc .. "Effect" .. styles.skillc .. "Skill prerequisite" .. styles.skillc .. "First ally" .. styles.skillc .. "Second ally"
             for k, v in ipairs(mw.text.split(prop.fskills, "\n")) do
-                skill = data.syntheses[v]
-                if not skill then
-                    alias = data.aliases[v]
-                    if alias then
-                        v = alias
-                        skill = data.syntheses[v]
-                    end
-                end
+                v, skill = resolveSkill(data, v, data.syntheses)
                 if v == "" then
                     result = result .. noskill()
                 elseif not skill then
@@ -638,14 +605,7 @@ function p.render(ctx, result)
                     if k2 > 2 then
                         break
                     elseif k2 % 2 == 1 then -- this checks partner (false) or skill name (true) divided by the backslash.
-                        skill = data.skills[v2] -- now v2 represents skill name.
-                        if not skill then
-                            alias = data.aliases[v2]
-                            if alias then
-                                v2 = calias
-                                skill = data.skills[v2]
-                            end
-                        end
+                        v2, skill = resolveSkill(data, v2) -- now v2 represents skill name.
                         if v2 == "" then
                             skillcell = ""
                             skille = ""
@@ -686,57 +646,58 @@ function p.render(ctx, result)
                 end
             end
         end
-        result = result .. "\n|}"
+    return result .. "\n|}"
+end
+
+local function renderPassiveSkills(ctx, result)
+    local styles = ctx.styles
+    local prop = ctx.prop
+    local data = ctx.data
+    local gameg = ctx.gameg
+    local gamegn = ctx.gamegn
+    local skill, skillcell
+
+    if gameg == "smtsj" then
+        result = result .. styles.table2 .. styles.h .. "colspan=3|D-Source Skills"
+    else
+        result = result .. styles.table2 .. styles.h .. "colspan=3|[[List of " .. gamegn .. " Skills#Passive Skills|" .. styles.spanc .. "Passive Skills</span>]]"
     end
-    if prop.pskills then
-        if gameg == "smtsj" then
-            result = result .. styles.table2 .. styles.h .. "colspan=3|D-Source Skills"
+    result = result .. '\n|-style="border:0"\n|style="padding:0;width:33%"|\n|style="padding:0;width:33%"|\n|style="padding:0;width:33%"|'
+    for k, v in ipairs(mw.text.split(prop.pskills, "\n")) do
+        v, skill = resolveSkill(data, v)
+        if v == "" or v == "-" or v == "--" then
+            skillcell = ""
+        elseif not skill then
+            skillcell = styles.skill3 .. '"|' .. v
         else
-            result = result .. styles.table2 .. styles.h .. "colspan=3|[[List of " .. gamegn .. " Skills#Passive Skills|" .. styles.spanc .. "Passive Skills</span>]]"
+            if skill.name then v = skill.name end
+            skillcell = styles.skill3 .. '" title="Cost: ' .. skill.cost .. "; " .. skill.effect .. '"|' .. v
         end
-        result = result .. '\n|-style="border:0"\n|style="padding:0;width:33%"|\n|style="padding:0;width:33%"|\n|style="padding:0;width:33%"|'
-        for k, v in ipairs(mw.text.split(prop.pskills, "\n")) do
-            skill = data.skills[v]
-            if not skill then
-                alias = data.aliases[v]
-                if alias then
-                    v = alias
-                    skill = data.skills[v]
-                end
-            end
-            if v == "" or v == "-" or v == "--" then
-                skillcell = ""
-            elseif not skill then
-                skillcell = styles.skill3 .. '"|' .. v
-            else
-                if skill.name then v = skill.name end
-                skillcell = styles.skill3 .. '" title="Cost: ' .. skill.cost .. "; " .. skill.effect .. '"|' .. v
-            end
-            if k % 3 == 1 then
-                result = result .. "\n|-" .. skillcell
-            else
-                result = result .. skillcell
-            end
+        if k % 3 == 1 then
+            result = result .. "\n|-" .. skillcell
+        else
+            result = result .. skillcell
         end
-        result = result .. "\n|}"
     end
-    if (gameg == "smtsj" or gameg == "desu1" or gameg == "desu2") and (prop.askills or prop.apskills) then
-        if gameg == "smtsj" then
-            result = result .. styles.table2 .. styles.h .. "colspan=3|Item Drops"
-        else
-            result = result .. styles.table2 .. styles.h .. "colspan=3|List of Auction Skills"
-        end
-        result = result .. '\n|-style="border:0"\n|style="padding:0;width:33%"|\n|style="padding:0;width:33%"|\n|style="padding:0;width:33%"|'
+    return result .. "\n|}"
+end
+
+local function renderAuctionSkills(ctx, result)
+    local styles = ctx.styles
+    local prop = ctx.prop
+    local data = ctx.data
+    local gameg = ctx.gameg
+    local skill, skillcell
+
+    if gameg == "smtsj" then
+        result = result .. styles.table2 .. styles.h .. "colspan=3|Item Drops"
+    else
+        result = result .. styles.table2 .. styles.h .. "colspan=3|List of Auction Skills"
+    end
+    result = result .. '\n|-style="border:0"\n|style="padding:0;width:33%"|\n|style="padding:0;width:33%"|\n|style="padding:0;width:33%"|'
         if prop.askills then
             for k, v in ipairs(mw.text.split(prop.askills, "\n")) do
-                skill = data.skills[v]
-                if not skill then
-                    alias = data.aliases[v]
-                    if alias then
-                        v = alias
-                        skill = data.skills[v]
-                    end
-                end
+                v, skill = resolveSkill(data, v)
                 if v == "" or v == "-" or v == "--" then
                     skillcell = ""
                 elseif not skill then
@@ -754,14 +715,7 @@ function p.render(ctx, result)
         end
         if prop.apskills then
             for k, v in ipairs(mw.text.split(prop.apskills, "\n")) do
-                skill = data.skills[v]
-                if not skill then
-                    alias = data.aliases[v]
-                    if alias then
-                        v = alias
-                        skill = data.skills[v]
-                    end
-                end
+                v, skill = resolveSkill(data, v)
                 if v == "" or v == "-" or v == "--" then
                     skillcell = ""
                 elseif not skill then
@@ -777,100 +731,145 @@ function p.render(ctx, result)
                 end
             end
         end
-        result = result .. "\n|}"
+    return result .. "\n|}"
+end
+
+local function renderUnknownPower(ctx, result)
+    local styles = ctx.styles
+    local prop = ctx.prop
+
+    result = result .. styles.table2 .. styles.h .. 'colspan="2"|[[Unknown Power|' .. styles.spanc .. "Unknown Power</span>]]" .. styles.skill
+    prop.unknown = prop.unknown:lower()
+    if prop.unknown == "attack type" or prop.unknown == "attack-type" or prop.unknown == "attack" then
+        result = result .. "Attack Type" .. styles.cost1 .. 'Deals <abbr title="Equipper has ' .. "'Great'" .. ' affinity with the Persona">500</abbr> or <abbr title="Equipper has ' .. "'Good'" .. ' affinity with the Persona">250</abbr> non-elemental damage to all enemies.'
+    elseif prop.unknown == "defense type" or prop.unknown == "defense-type" or prop.unknown == "defense" then
+        result = result .. "Defense Type" .. styles.cost1 .. '<abbr title="Equipper has ' .. "'Great'" .. ' affinity with the Persona">Reflects</abbr> or <abbr title="Equipper has ' .. "'Good'" .. ' affinity with the Persona">nullifies</abbr> the incoming attack.'
+    elseif prop.unknown == "assist type" or prop.unknown == "assist-type" or prop.unknown == "assist" then
+        result = result .. "Assist Type" .. styles.cost1 .. 'Bestows Tarukaja + Makakaja <abbr title="Only applicable when the equipper has ' .. "'Great'" .. ' affinity with the Persona">(or Rakukaja + Samakaja in addition)</abbr>'
+    elseif prop.unknown == "recovery type" or prop.unknown == "recovery-type" or prop.unknown == "recovery" then
+        result = result .. "Recovery Type" .. styles.cost1 .. 'Fully recovers HP <abbr title="Only applicable when the equipper has ' .. "'Great'" .. ' affinity with the Persona">(or removes ailment in addition)</abbr>.'
+    elseif prop.unknown == "revival type" or prop.unknown == "revival-type" or prop.unknown == "revival" then
+        result = result .. "Revival Type" .. styles.cost1 .. 'Revives from unconscious with <abbr title="Equipper has ' .. "'Great'" .. ' affinity with the Persona">full</abbr> or <abbr title="Equipper has ' .. "'Good'" .. ' affinity with the Persona">1/4</abbr> HP.'
+    elseif prop.unknown == "special type" or prop.unknown == "special-type" or prop.unknown == "special" then
+        result = result .. "Special Type" .. styles.cost1 .. "Eliminates all enemies when the user is unconscious."
     end
-    if gameg == "p2ep" and prop.unknown then
-        result = result .. styles.table2 .. styles.h .. 'colspan="2"|[[Unknown Power|' .. styles.spanc .. "Unknown Power</span>]]" .. styles.skill
-        prop.unknown = prop.unknown:lower()
-        if prop.unknown == "attack type" or prop.unknown == "attack-type" or prop.unknown == "attack" then
-            result = result .. "Attack Type" .. styles.cost1 .. 'Deals <abbr title="Equipper has ' .. "'Great'" .. ' affinity with the Persona">500</abbr> or <abbr title="Equipper has ' .. "'Good'" .. ' affinity with the Persona">250</abbr> non-elemental damage to all enemies.'
-        elseif prop.unknown == "defense type" or prop.unknown == "defense-type" or prop.unknown == "defense" then
-            result = result .. "Defense Type" .. styles.cost1 .. '<abbr title="Equipper has ' .. "'Great'" .. ' affinity with the Persona">Reflects</abbr> or <abbr title="Equipper has ' .. "'Good'" .. ' affinity with the Persona">nullifies</abbr> the incoming attack.'
-        elseif prop.unknown == "assist type" or prop.unknown == "assist-type" or prop.unknown == "assist" then
-            result = result .. "Assist Type" .. styles.cost1 .. 'Bestows Tarukaja + Makakaja <abbr title="Only applicable when the equipper has ' .. "'Great'" .. ' affinity with the Persona">(or Rakukaja + Samakaja in addition)</abbr>'
-        elseif prop.unknown == "recovery type" or prop.unknown == "recovery-type" or prop.unknown == "recovery" then
-            result = result .. "Recovery Type" .. styles.cost1 .. 'Fully recovers HP <abbr title="Only applicable when the equipper has ' .. "'Great'" .. ' affinity with the Persona">(or removes ailment in addition)</abbr>.'
-        elseif prop.unknown == "revival type" or prop.unknown == "revival-type" or prop.unknown == "revival" then
-            result = result .. "Revival Type" .. styles.cost1 .. 'Revives from unconscious with <abbr title="Equipper has ' .. "'Great'" .. ' affinity with the Persona">full</abbr> or <abbr title="Equipper has ' .. "'Good'" .. ' affinity with the Persona">1/4</abbr> HP.'
-        elseif prop.unknown == "special type" or prop.unknown == "special-type" or prop.unknown == "special" then
-            result = result .. "Special Type" .. styles.cost1 .. "Eliminates all enemies when the user is unconscious."
+    return result .. "\n|}"
+end
+
+local function renderComboAttacks(ctx, result)
+    local getGames = ctx.getGames
+    local styles = ctx.styles
+    local prop = ctx.prop
+    local data = ctx.data
+    local gameg = ctx.gameg
+    local gamed = ctx.gamed
+    local wikitext = ctx.wikitext
+    local skill, skillcell
+
+    result = result .. styles.table2 .. styles.h .. 'colspan="4" style="background-color: ' .. getGames.games[gameg].colorb .. ";background: linear-gradient(120deg, " .. getGames.games[gameg].colorb .. " 40%, #000 40.1%, #000 41%, #fff 41.1%, #fff 59%, #000 59.1%, #000 60%, " .. getGames.games[gameg].colorb .. ' 60.1%"|[[Combo Attacks|<span style="color:black;text-shadow:-3px 3px 3px #0ff">Combo Attacks</span>]]'
+    result = result .. styles.skill .. "Combo Attack" .. styles.skillc .. "Button Input" .. styles.skill3 .. '" colspan=2|Skills'
+    for k1, v1 in ipairs(mw.text.split(prop.cskills, "\n")) do
+        skillcell = ""
+        local v_cnt = 0
+        for k in string.gmatch(v1, "\\") do
+            v_cnt = v_cnt + 1
         end
-        result = result .. "\n|}"
-    end
-    if gameg == "p5s" and prop.cskills then
-        result = result .. styles.table2 .. styles.h .. 'colspan="4" style="background-color: ' .. getGames.games[gameg].colorb .. ";background: linear-gradient(120deg, " .. getGames.games[gameg].colorb .. " 40%, #000 40.1%, #000 41%, #fff 41.1%, #fff 59%, #000 59.1%, #000 60%, " .. getGames.games[gameg].colorb .. ' 60.1%"|[[Combo Attacks|<span style="color:black;text-shadow:-3px 3px 3px #0ff">Combo Attacks</span>]]'
-        result = result .. styles.skill .. "Combo Attack" .. styles.skillc .. "Button Input" .. styles.skill3 .. '" colspan=2|Skills'
-        for k1, v1 in ipairs(mw.text.split(prop.cskills, "\n")) do
-            skillcell = ""
-            local v_cnt = 0
-            for k in string.gmatch(v1, "\\") do
-                v_cnt = v_cnt + 1
-            end
-            for k2, v2 in ipairs(mw.text.split(v1, "\\")) do
-                if k2 > 1 then
-                    skill = data.skills[v2]
-                    if not skill then
-                        alias = data.aliases[v2]
-                        if alias then
-                            v2 = alias
-                            skill = data.skills[v2]
-                        end
-                    end
-                    local resv2, resdec
-                    if v2 == "" or v2 == "-" or v2 == "--" then
-                        resv2 = '<span style="font-weight:bold;">-</span>'
-                    elseif not skill then
-                        resv2 = '<span style="color:red;font-weight:bold;font-size:1.2em">Invalid skill name of "' .. v2 .. '". You may correct the skill name or modify [[module:Skills/' .. gamed .. "]] if needed.</span>"
-                    else
-                        if skill.name then v2 = skill.name end
-                        resv2 = '<span style="font-weight:bold;>' .. v2 .. "</span>"
-                        resdec = skill.effect
-                    end
-                    if k2 > 2 then
-                        if k2 % 2 == 0 then
-                            if resdec then
-                                skillcell = skillcell .. "\n|-" .. styles.effect1 .. resv2 .. styles.effect1 .. resdec
-                            else
-                                skillcell = skillcell .. "\n|-" .. styles.effect1p .. resv2
-                            end
+        for k2, v2 in ipairs(mw.text.split(v1, "\\")) do
+            if k2 > 1 then
+                v2, skill = resolveSkill(data, v2)
+                local resv2, resdec
+                if v2 == "" or v2 == "-" or v2 == "--" then
+                    resv2 = '<span style="font-weight:bold;">-</span>'
+                elseif not skill then
+                    resv2 = '<span style="color:red;font-weight:bold;font-size:1.2em">Invalid skill name of "' .. v2 .. '". You may correct the skill name or modify [[module:Skills/' .. gamed .. "]] if needed.</span>"
+                else
+                    if skill.name then v2 = skill.name end
+                    resv2 = '<span style="font-weight:bold;>' .. v2 .. "</span>"
+                    resdec = skill.effect
+                end
+                if k2 > 2 then
+                    if k2 % 2 == 0 then
+                        if resdec then
+                            skillcell = skillcell .. "\n|-" .. styles.effect1 .. resv2 .. styles.effect1 .. resdec
                         else
-                            if resdec then
-                                skillcell = skillcell .. "\n|-" .. styles.effect2 .. resv2 .. styles.effect2 .. resdec
-                            else
-                                skillcell = skillcell .. "\n|-" .. styles.effect2p .. resv2
-                            end
+                            skillcell = skillcell .. "\n|-" .. styles.effect1p .. resv2
                         end
                     else
                         if resdec then
-                            skillcell = skillcell .. styles.effect1 .. resv2 .. styles.effect1 .. resdec
+                            skillcell = skillcell .. "\n|-" .. styles.effect2 .. resv2 .. styles.effect2 .. resdec
                         else
-                            skillcell = skillcell .. styles.effect1p .. resv2
+                            skillcell = skillcell .. "\n|-" .. styles.effect2p .. resv2
                         end
                     end
                 else
-                    v2 = v2:gsub("^%l", string.upper)
-                    if not v2 then v2 = "" end
-                    local ca = data.cattacks[v2]
-                    result = result .. styles.skill2 .. 'rowspan="' .. v_cnt .. '"|' .. v2 .. styles.cost3 .. 'rowspan="' .. v_cnt .. '"|' .. wikitext(ca.buttons)
+                    if resdec then
+                        skillcell = skillcell .. styles.effect1 .. resv2 .. styles.effect1 .. resdec
+                    else
+                        skillcell = skillcell .. styles.effect1p .. resv2
+                    end
                 end
+            else
+                v2 = v2:gsub("^%l", string.upper)
+                if not v2 then v2 = "" end
+                local ca = data.cattacks[v2]
+                result = result .. styles.skill2 .. 'rowspan="' .. v_cnt .. '"|' .. v2 .. styles.cost3 .. 'rowspan="' .. v_cnt .. '"|' .. wikitext(ca.buttons)
             end
-            result = result .. skillcell
         end
-        result = result .. "\n|}"
+        result = result .. skillcell
+    end
+    return result .. "\n|}"
+end
+
+local function renderChildLightPower(ctx, result)
+    local styles = ctx.styles
+    local prop = ctx.prop
+    local data = ctx.data
+    local gamegn = ctx.gamegn
+    local gamed = ctx.gamed
+    local noskill = ctx.noskill
+    local pelement, peffect
+
+    if not data.skills[prop.power] then
+        prop.power = noskill(prop.power, gamed)
+        pelement = ""
+        peffect = ""
+    else
+        pelement = styles.cost1 .. data.skills[prop.power].element
+        peffect = styles.effect1 .. data.skills[prop.power].effect
+        prop.power = styles.skill .. prop.power
+    end
+    return result .. styles.table2 .. styles.h .. "colspan=3|[[List of " .. gamegn .. " Skills##Powers|" .. styles.spanc .. "Power</span>]]\n|-" .. styles.skill .. "Power" .. styles.skillc .. "Type" .. styles.skillc .. "Effect" .. prop.power .. pelement .. peffect .. "\n|}"
+end
+
+function p.render(ctx, result)
+    local prop = ctx.prop
+    local gameg = ctx.gameg
+
+    if prop.dskills then
+        result = renderDefaultSkills(ctx, result)
+    end
+    if prop.skills then
+        result = renderNormalSkills(ctx, result)
+    end
+    if prop.fskills then
+        result = renderFusionSkills(ctx, result)
+    end
+    if prop.pskills then
+        result = renderPassiveSkills(ctx, result)
+    end
+    if (gameg == "smtsj" or gameg == "desu1" or gameg == "desu2") and (prop.askills or prop.apskills) then
+        result = renderAuctionSkills(ctx, result)
+    end
+    if gameg == "p2ep" and prop.unknown then
+        result = renderUnknownPower(ctx, result)
+    end
+    if gameg == "p5s" and prop.cskills then
+        result = renderComboAttacks(ctx, result)
     end
     if gameg == "childlight" and prop.power ~= "" then
-        local pelement, peffect
-        if not data.skills[prop.power] then
-            prop.power = noskill(prop.power, gamed)
-            pelement = ""
-            peffect = ""
-        else
-            pelement = styles.cost1 .. data.skills[prop.power].element
-            peffect = styles.effect1 .. data.skills[prop.power].effect
-            prop.power = styles.skill .. prop.power
-        end
-        result = result .. styles.table2 .. styles.h .. "colspan=3|[[List of " .. gamegn .. " Skills##Powers|" .. styles.spanc .. "Power</span>]]\n|-" .. styles.skill .. "Power" .. styles.skillc .. "Type" .. styles.skillc .. "Effect" .. prop.power .. pelement .. peffect .. "\n|}"
+        result = renderChildLightPower(ctx, result)
     end
+
     return result
 end
 
