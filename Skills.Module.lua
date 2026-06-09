@@ -1,5 +1,6 @@
 local getArgs = require("Module:Arguments").getArgs
 local getGames = require("Module:Gamedata")
+local Style = require("Module:Skills/Style")
 local SkillTable = require("Module:Skills/Render/SkillTable")
 
 local p = {}
@@ -13,29 +14,7 @@ local function makeInvokeFunction(funcName)
     end
 end
 
-local styles = {
-    ["skill"] = '\n|-\n!style="background:#000;color:#fff"|',
-    ["skillc"] = '\n!style="background:#000;color:#fff"|',
-    ["skill2"] = '\n|-\n!style="background:#000;color:#fff" ',
-    ["skill3"] = '\n!style="background:#000;color:#fff;',
-    ["skill3m"] = '\n!style="background:transparent"|',
-    ["cost1"] = '\n|style="background:#222"|',
-    ["cost2"] = '\n|style="background:#282828"|',
-    ["cost3"] = '\n|style="background:#222" ',
-    ["effect1"] = '\n|style="background:#222;text-align:left;padding-left:5px"|',
-    ["effect2"] = '\n|style="background:#282828;text-align:left;padding-left:5px"|',
-    ["effect1p"] = '\n|colspan=2 style="background:#222;text-align:left;padding-left:5px"|',
-    ["effect2p"] = '\n|colspan=2 style="background:#282828;text-align:left;padding-left:5px"|',
-    ["order"] = '\n|style="background:#000;color:#fff;text-align:left;padding-left:5px"|',
-    ["order2"] = '\n|-\n|style="background:#000;color:#fff;text-align:left;padding-left:5px"|',
-    ["table2h"] = '\n{|width="100%" class="customtable ',
-    ["table2"] = '\n{|width="100%" class="customtable"',
-    ["table2b"] = '\n{|cellpadding=0 cellspacing=0 style="width:100%;background:transparent" ',
-    ["statlow"] = '\n|style="background:#000;color:#fff"|',
-    ["statlow2"] = '\n|style="background:#fff;color:#000"|',
-    ["statlow3"] = '\n|style="background:#000;',
-    ["quote"] = '\n|-\n|style="background:#000;color:#fff;text-align:center;border-radius:3.5px;',
-}
+local styles = Style.new()
 
 local function frac(numerator, denominator)
     return '<span style="font-size:9px;position:relative;top:2px"><span style="position:relative;top:-5px;right:-3px">' .. numerator .. '</span><span style="position:relative;top:-2px">／</span>' .. denominator .. "</span>"
@@ -600,15 +579,7 @@ function p._stats(args)
     if not (gameg == "smt9" or gameg == "20xx" or game == "lb3" or game == "lbs" or game == "ronde" or game == "cs") then data = require("Module:Skills/" .. gamed) end
     local prop = get_prop(args)
     if gameg == "smt3" then getGames.games[gameg].colorbg = getGames.games[gameg].colorbg2 end
-    styles.h = '\n!style="background: ' .. getGames.games[gameg].colorbg .. ";color: " .. getGames.games[gameg].font .. '" '
-    styles.spanc = '<span style="color:' .. getGames.games[gameg].font .. '">'
-    if not getGames.games[gameg].statt then getGames.games[gameg].statt = "#529488" end
-    styles.barh = '\n|style="color:' .. getGames.games[gameg].statt .. '" '
-    styles.bart11 = '\n|rowspan=2 style="padding:0" width='
-    styles.bart12 = '|\n{|cellspacing=2 cellpadding=0 style="background:transparent;font-size:11px;font-family:monospace;letter-spacing:-1px;line-height:'
-    styles.bard = '\n|style="text-align:right;padding:0 3px" '
-    styles.bard1 = styles.bard .. "width=12px|"
-    styles.bard2 = styles.bard .. "width=17px|"
+    local styles = Style.new(getGames.games[gameg])
     local result = '{|align="center" style="min-width:650px;text-align:center; background: #222; border:2px solid ' .. getGames.games[gameg].colorb .. '; border-radius:10px; font-size:75%; font-family:verdana;"\n|-\n|' .. styles.table2b
     if gameg == "sh2" then result = '{|align="center" style="min-width:650px;text-align:center; background: #222; border:2px solid ' .. getGames.games[gameg].colorbg .. '; border-radius:10px; font-size:75%; font-family:verdana;"\n|-\n|' .. styles.table2b end
     local pending_top_stats, pending_top_stats_categories
@@ -627,11 +598,6 @@ function p._stats(args)
         else
             result = result .. affinity_table
         end
-    end
-    if getGames.games[gameg].statb == nil then
-        styles.barc = "orange"
-    else
-        styles.barc = getGames.games[gameg].statb
     end
     if prop.image then
         result = result .. '\n!style="width:20px;border:#333 solid 2px;border-radius:7px;background:'
