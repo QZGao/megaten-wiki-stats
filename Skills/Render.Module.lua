@@ -1,0 +1,271 @@
+local Style = require("Module:Skills/Style")
+local Stats = require("Module:Skills/Render/Stats")
+local Affinity = require("Module:Skills/Render/Affinity")
+local Drops = require("Module:Skills/Render/Drops")
+local SkillTable = require("Module:Skills/Render/SkillTable")
+
+local p = {}
+
+-- Flush a queued top stat table when no matching top affinity table consumed it.
+-- Used for Persona/P5X layouts where stat rows may merge horizontally with affinity rows.
+local function flushPendingTopStats(ctx, result)
+    if ctx.pending_top_stats then
+        result = result .. ctx.pending_top_stats .. (ctx.pending_top_stats_categories or "")
+        ctx.pending_top_stats = nil
+        ctx.pending_top_stats_categories = nil
+    end
+    return result
+end
+
+-- Merge a pending top stat table with a top affinity table, or append the affinity table alone.
+-- Used by Persona 3-5/P5X/Metaphor/Ronde top affinity rendering.
+local function appendTopAffinityTable(ctx, result, affinity_table)
+    if ctx.pending_top_stats then
+        result = result .. ctx.styles.table2b .. '\n|style="padding:0;width:24%;vertical-align:top"|' .. ctx.pending_top_stats .. '\n|style="padding:0;width:76%;vertical-align:top"|' .. affinity_table .. "\n|}" .. (ctx.pending_top_stats_categories or "")
+        ctx.pending_top_stats = nil
+        ctx.pending_top_stats_categories = nil
+    else
+        result = result .. affinity_table
+    end
+    return result
+end
+
+-- Render the full stats box after Module:Skills has normalized args and built context.
+-- Coordinates top stats, affinities, drops/rewards, miscellaneous rows, and the skill table in legacy output order.
+function p.render(ctx)
+    local getGames = ctx.getGames
+    local prop = ctx.prop
+    local data = ctx.data
+    local game = ctx.game
+    local gameg = ctx.gameg
+    local gamen = ctx.gamen
+    local gamegn = ctx.gamegn
+    local gamed = ctx.gamed
+    local cate = ctx.cate
+    local noskill = ctx.noskill
+    local wikitext = ctx.wikitext
+
+    -- Let top affinity rendering merge with pending Persona/P5X/Metaphor stat rows.
+    -- The child module stays focused on affinity markup while this coordinator owns row placement.
+    ctx.appendTopAffinityTable = function(result, affinity_table)
+        return appendTopAffinityTable(ctx, result, affinity_table)
+    end
+    if gameg == "smt3" then getGames.games[gameg].colorbg = getGames.games[gameg].colorbg2 end
+    local styles = Style.new(getGames.games[gameg])
+    local result = '{|align="center" style="min-width:650px;text-align:center; background: #222; border:2px solid ' .. getGames.games[gameg].colorb .. '; border-radius:10px; font-size:75%; font-family:verdana;"\n|-\n|' .. styles.table2b
+    if gameg == "sh2" then result = '{|align="center" style="min-width:650px;text-align:center; background: #222; border:2px solid ' .. getGames.games[gameg].colorbg .. '; border-radius:10px; font-size:75%; font-family:verdana;"\n|-\n|' .. styles.table2b end
+    if prop.image then
+        result = result .. '\n!style="width:20px;border:#333 solid 2px;border-radius:7px;background:'
+        if game == "smt1" then
+            result = result .. "#637373"
+        elseif gameg == "smtif" then
+            result = result .. "#3018b8"
+        elseif game == "majin2" then
+            result = result .. "#31315a"
+        elseif gameg == "p1" or gameg == "p2is" or gameg == "p2ep" or (gameg == "p3" or gameg == "p3re") or gameg == "dcbrb" or gameg == "dcbrp" or gameg == "dcwb" or gameg == "childred" or gameg == "childps" or gameg == "childwhite" or gameg == "childfire" or gameg == "childlight" then
+            result = result .. "transparent"
+        else
+            result = result .. "#000"
+        end
+        result = result .. '"|' .. prop.image
+    end
+    result = result .. "\n|"
+    ctx.styles = styles
+    result = Stats.renderTop(ctx, result)
+    result = Affinity.renderTop(ctx, result)
+    result = flushPendingTopStats(ctx, result)
+    if (gameg == "p2is" or gameg == "p2ep") and (prop.exclusive or prop.traits or prop.convo) then
+        result = result .. styles.table2
+        if prop.exclusive then result = result .. styles.h .. "width=90px|Exclusive to" .. styles.order .. prop.exclusive end
+        if prop.traits then result = result .. styles.h .. "width=50px|[[Personality|" .. styles.spanc .. "Traits</span>]]" .. styles.order .. prop.traits end
+        if prop.convo then result = result .. styles.h .. "width=50px|[[Special conversation|" .. styles.spanc .. '<abbr style="border-bottom:1px dotted black;" title="if equipped with this Persona, there is a chance it will talk to this demon if encountered">Ptalk</abbr>]]' .. styles.order .. prop.convo end
+        result = result .. "\n|}"
+    end
+    if (gameg == "p2is" or gameg == "p2ep") and prop.profile then result = result .. styles.table2b .. styles.quote .. '"|' .. string.gsub(prop.profile, "!!", "‼") .. "\n|}" end
+    result = Drops.renderPersona3Rewards(ctx, result)
+    if gameg == "p3re" and prop.theurgia then
+        result = result .. styles.table2
+        result = result .. styles.h .. "width=100px|[[Theurgy|" .. styles.spanc .. "Gauge Condition</span>]]" .. styles.order .. prop.theurgia
+        result = result .. "\n|}"
+    end
+    if gameg == "p3re" and prop.ptraits then
+        if string.find(prop.ptraits, "\n") then
+            local pt_cnt = 0
+            for k in string.gmatch(prop.ptraits, "\n") do
+                pt_cnt = pt_cnt + 1
+            end
+            result = result .. styles.table2
+            result = result .. styles.h .. 'width=100px rowspan="' .. (pt_cnt + 1) .. '"|[[Theurgy|' .. styles.spanc .. "Characteristics</span>]]" .. styles.order
+            for k, v in ipairs(mw.text.split(prop.ptraits, "\n")) do
+                if k > 1 then result = result .. styles.order2 end
+                local traitLine = mw.text.split(v, "\\"), traitName, traitType
+                if #traitLine > 1 then
+                    traitName = traitLine[1]
+                    traitType = traitLine[2]
+                else
+                    traitName = v
+                    traitType = nil
+                end
+                local traitEffect = data.theurgies[traitName]
+
+                if not traitEffect then
+                    result = result .. '<span style="font-weight:bold;color:red">Invalid Theurgy name of "' .. traitName .. '". You may correct the Theurgy name or modify [[Module:Skills/' .. gamed .. "]] if needed</span>"
+                else
+                    result = result .. '<span style="font-weight:bold">' .. traitName .. ":</span> " .. traitEffect
+                    if traitType then result = result .. '<div style="float:right;background:#696969;border-radius:15px;padding:0 10px">' .. traitType .. "</div>" end
+                end
+            end
+            result = result .. "\n|}"
+        else
+            result = result .. styles.table2
+            result = result .. styles.h .. "width=100px|[[Theurgy|" .. styles.spanc .. "Characteristics</span>]]" .. styles.order
+            local traitLine = mw.text.split(prop.ptraits, "\\"), traitName, traitType
+            if #traitLine > 1 then
+                traitName = traitLine[1]
+                traitType = traitLine[2]
+            else
+                traitName = prop.ptraits
+                traitType = nil
+            end
+            local traitEffect = data.theurgies[traitName]
+
+            if not traitEffect then
+                result = result .. '<span style="font-weight:bold;color:red">Invalid Theurgy name of "' .. traitName .. '". You may correct the Theurgy name or modify [[Module:Skills/' .. gamed .. "]] if needed</span>"
+            else
+                result = result .. '<span style="font-weight:bold">' .. traitName .. ":</span> " .. traitEffect
+                if traitType then result = result .. '<div style="float:right;background:#696969;border-radius:15px;padding:0 10px">' .. traitType .. "</div>" end
+            end
+            result = result .. "\n|}"
+        end
+    end
+    result = Drops.renderPersona4Rewards(ctx, result)
+    if gameg == "p5r" and prop.ptraits then
+        if string.find(prop.ptraits, "\\") then
+            local pt_cnt = 0
+            for k in string.gmatch(prop.ptraits, "\\") do
+                pt_cnt = pt_cnt + 1
+            end
+            result = result .. styles.table2
+            result = result .. styles.h .. 'width=100px rowspan="' .. (pt_cnt + 1) .. '"|[[Persona Traits|' .. styles.spanc .. "Persona Trait</span>]]" .. styles.order
+            for k, v in ipairs(mw.text.split(prop.ptraits, "\\")) do
+                if k > 1 then result = result .. styles.order2 end
+                local ptrait = data.traits[v]
+                if not ptrait then
+                    result = result .. '<span style="font-weight:bold;color:red">Invalid trait name of "' .. v .. '". You may correct the trait name or modify [[Module:Skills/' .. gamed .. "]] if needed</span>"
+                else
+                    if ptrait.exclusive then
+                        result = result .. '<span style="font-weight:bold"><abbr title="' .. ptrait.exclusive .. '">' .. v .. "</abbr>:</span> " .. ptrait.effect
+                    else
+                        result = result .. '<span style="font-weight:bold">' .. v .. ":</span> " .. ptrait.effect
+                    end
+                end
+            end
+            result = result .. "\n|}"
+        else
+            result = result .. styles.table2
+            result = result .. styles.h .. "width=100px|[[Persona Traits|" .. styles.spanc .. "Persona Trait</span>]]" .. styles.order
+            local ptrait = data.traits[prop.ptraits]
+            if not ptrait then
+                result = result .. '<span style="font-weight:bold;color:red">Invalid trait name of "' .. prop.ptraits .. '". You may correct the trait name or modify [[Module:Skills/' .. gamed .. "]] if needed</span>"
+            else
+                if ptrait.exclusive then
+                    result = result .. '<span style="font-weight:bold"><abbr title="' .. ptrait.exclusive .. '">' .. prop.ptraits .. "</abbr>:</span> " .. ptrait.effect
+                else
+                    result = result .. '<span style="font-weight:bold">' .. prop.ptraits .. ":</span> " .. ptrait.effect
+                end
+            end
+            result = result .. "\n|}"
+        end
+    end
+    result = Drops.renderPersona5Rewards(ctx, result)
+    result = result .. "\n|}"
+    -- End of image span.
+    result = Drops.renderLegacyRewards(ctx, result)
+    result = Affinity.renderSmtIfLegacy(ctx, result)
+    if game == "smtim" then
+        if not prop.seealso then prop.seealso = mw.title.getCurrentTitle().text end
+        result = result .. styles.table2 .. styles.h .. "width=50px|Features" .. styles.order .. prop.feature .. styles.h .. "width=60px|See also" .. styles.order .. "[https://web.archive.org/web/megaten.sesshou.com/wiki/index.php/" .. string.gsub(prop.seealso, " ", "_") .. "]\n|}"
+    end
+    result = Affinity.renderPost(ctx, result)
+    result = Drops.renderPersona2Summon(ctx, result)
+    if gameg == "smt3" and (prop.recruit ~= "" or prop.obtain ~= "" or prop.evolvef or prop.evolvet) then
+        prop.recruit = prop.recruit:lower()
+        if prop.recruit == "yes" or prop.recruit == "recruit" then
+            prop.recruit = '<abbr title="Can be recruited in normal battle or obtained from conventional fusion.">Normal recruit or fusion</abbr>'
+        elseif prop.recruit == "dark recruit" then
+            prop.recruit = '<abbr title="Can be obtained via conventional fusion or recruited in normal battle under Full Kagutsuchi with fair chance.">[[Moon Phase System#Shin Megami Tensei III: Nocturne|Full Kagutsuchi]] recruitment or [[fusion]]</abbr>'
+        elseif prop.recruit == "dark" then
+            prop.recruit = '<abbr title="Can only be obtained via fusion. Open to non-recruitment conversation in normal battle.">[[Fusion]] only. Open to trading.</abbr>'
+        elseif prop.recruit == "fusion" then
+            prop.recruit = '<abbr title="Can only be obtained via conventional fusion.">[[Fusion]] only</abbr>'
+        elseif prop.recruit == "special" or prop.recruit == "special fusion" then
+            prop.recruit = '<abbr title="Can only be obtained via special fusion.">[[Special fusion#Shin Megami Tensei III: Nocturne|Special fusion]] only</abbr>'
+        elseif prop.recruit == "evolve" or prop.recruit == "evolution" then
+            prop.recruit = '<abbr title="Can only be obtained via evolution from another demon.">[[Evolution#Shin Megami Tensei III: Nocturne|Evolution]] only</abbr>'
+        elseif prop.recruit == "evolve neutral" or prop.recruit == "neutral evolution" then
+            prop.recruit = '<abbr title="Can be recruited in normal battle or obtained via evolution from another demon. Cannot be created via fusion.">Normal recruit or [[Evolution#Shin Megami Tensei III: Nocturne|evolution]]</abbr>'
+        elseif prop.recruit == "evolve dark" or prop.recruit == "dark evolution" then
+            prop.recruit = '<abbr title="Can only be obtained via evolution from another demon. Cannot be created via fusion. Open to non-recruitment conversation in normal battle.">[[Evolution#Shin Megami Tensei III: Nocturne|Evolution]] only. Open to trading.</abbr>'
+        elseif prop.recruit == "boss fusion" then
+            prop.recruit = '<abbr title="Can only be obtained via fusion after defeating it in boss battle.">[[Fusion]] only after boss battle</abbr>'
+        elseif prop.recruit == "boss special" or prop.recruit == "boss special fusion" then
+            prop.recruit = '<abbr title="Can only be obtained via special fusion after defeating it in boss battle.">[[Special fusion#Shin Megami Tensei III: Nocturne|Special fusion]] only after boss battle</abbr>'
+        elseif prop.recruit == "boss evolve" or prop.recruit == "boss evolution" then
+            prop.recruit = '<abbr title="Can only be obtained via evolution after defeating it in battle.">[[evolution#Shin Megami Tensei III: Nocturne|Evolution]] only after boss battle</abbr>'
+        elseif prop.recruit == "dark boss fusion" then
+            prop.recruit = '<abbr title="Can only be obtained via fusion after defeating it in boss battle. Open to non-recruitment conversation in normal battle.">[[Fusion]] only after boss battle. Open to trading.</abbr>'
+        elseif prop.recruit == "dark boss special fusion" then
+            prop.recruit = '<abbr title="Can only be obtained via special fusion after defeating it in boss battle. Open to non-recruitment conversation in normal battle.">[[Special fusion#Shin Megami Tensei III: Nocturne|Special fusion]] only after boss battle. Open to trading.</abbr>'
+        elseif prop.recruit == "dark boss evolve" then
+            prop.recruit = '<abbr title="Can only be obtained via evolution after defeating it in battle. Open to non-recruitment conversation in normal battle.">[[evolution#Shin Megami Tensei III: Nocturne|Evolution]] only after boss battle. Open to trading.</abbr>'
+        elseif prop.recruit == "samael" then
+            prop.recruit = '<abbr title="Can only be obtained via special fusion after defeating it in boss battle or choosing Shijima Reason after meeting with Ahriman in Kagutsuchi Tower.">Choose Shijima Reason or perform [[Special fusion#Shin Megami Tensei III: Nocturne|special fusion]] only after boss battle.</abbr>'
+        elseif prop.recruit == "thor" then
+            prop.recruit = '<abbr title="Can only be obtained via fusion after defeating him at Tower of Kagutsuchi.">[[Fusion]] only after boss battle at [[Tower of Kagutsuchi]]</abbr>'
+        elseif prop.recruit == "bishamon" then
+            prop.recruit = '<abbr title="Can only be obtained via fusion after defeating him at Bandou Shrine.">[[Fusion]] only after boss battle at [[Bandou Shrine]]</abbr>'
+        elseif prop.recruit == "futomimi" or prop.recruit == "sakahagi" then
+            prop.recruit = "[[Fusion]] only after boss battle and completing the revival side quest."
+        elseif prop.recruit == "raidou" or prop.recruit == "dante" then
+            prop.recruit = '<abbr title="Can only be recruited in story plot.">Plot related</abbr>'
+        elseif prop.recruit == "unique" or prop.recruit == "exclusive" or prop.recruit == "enemy" or prop.recruit == "enemy only" or prop.recruit == "enemy exclusive" then
+            prop.recruit = "Enemy only"
+        end
+        if prop.recruit or prop.obtain or prop.convo then
+            result = result .. styles.table2 .. styles.h
+            if prop.recruit or prop.obtain then result = result .. "width=80px|Obtainable" .. styles.order .. prop.recruit .. prop.obtain end
+            if prop.convo then result = result .. styles.h .. "width=146px|[[Special conversation|" .. styles.spanc .. "Special conversation</span>]]" .. styles.order .. prop.convo end
+            result = result .. "\n|}"
+        end
+        if prop.evolvef or prop.evolvet then
+            result = result .. styles.table2
+            if prop.evolvef then result = result .. styles.h .. "width=100px|[[Evolution#" .. gamegn .. "|" .. styles.spanc .. "Evolved from</span>]]" .. styles.order .. prop.evolvef end
+            if prop.evolvet then result = result .. styles.h .. "width=100px|[[Evolution#" .. gamegn .. "|" .. styles.spanc .. "Evolves into</span>]]" .. styles.order .. prop.evolvet end
+            result = result .. "\n|}"
+        end
+    end
+    result = Drops.renderFusionRewards(ctx, result)
+    result = SkillTable.render({
+        getGames = getGames,
+        styles = styles,
+        prop = prop,
+        data = data,
+        game = game,
+        gameg = gameg,
+        gamegn = gamegn,
+        gamed = gamed,
+        noskill = noskill,
+        wikitext = wikitext,
+    }, result)
+    if (gameg == "desu1" or gameg == "desu2") and (prop.quote or prop.profile) then
+        result = result .. styles.table2
+        if prop.quote then result = result .. styles.quote .. 'font-style:italic"|' .. string.gsub(prop.quote, "!!", "‼") end
+        if prop.profile then result = result .. "\n|-" .. styles.quote .. 'font-style:italic"|' .. string.gsub(prop.profile, "!!", "‼") end
+        result = result .. "\n|}"
+    end
+    if game == "smtsj" and prop.profile then result = result .. styles.table2 .. styles.h .. "|Password" .. styles.quote .. 'font-weight:bold;font-family:Courier New,sans-serif;font-size:1.6em"|' .. prop.profile .. "\n|}" end
+    result = result .. "\n|}"
+    return result
+end
+
+return p
