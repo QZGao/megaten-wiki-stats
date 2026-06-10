@@ -1,5 +1,20 @@
 local p = {}
 
+local smt4_skilltypes = {
+    ["phys"] = "[[File:PhysIcon_SMTIV.png|alt=Physical|Physical|link=Physical Skills]] Physical",
+    ["gun"] = "[[File:GunIcon2.png|alt=Gun|Gun|link=Gun Skills]] Gun",
+    ["fire"] = "[[File:FireIcon_SMTIV.png|alt=Fire|Fire|link=Fire Skills]] Fire",
+    ["ice"] = "[[File:IceIcon_SMTIV.png|alt=Ice|Ice|link=Ice Skills]] Ice",
+    ["elec"] = "[[File:ElecIcon_SMTIV.png|alt=Electricity|Electricity|link=Electric Skills]] Electricity",
+    ["force"] = "[[File:ForceIcon.png|alt=Force|Force|link=Wind Skills]] Force",
+    ["light"] = "[[File:ExpelIcon_SMTIV.png|alt=Light|Light|link=Expel Skills]] Light",
+    ["dark"] = "[[File:CurseIcon_SMTIV.png|alt=Dark|Dark|link=Death Skills]] Dark",
+    ["almighty"] = "[[File:AlmightyIcon_SMTIV.png|alt=Almighty|Almighty|link=Almighty Skills]] Almighty",
+    ["ailment"] = "[[File:AilmentIcon_SMTIV.png|alt=Ailment|Ailment|link=Ailment Skills]] Ailment",
+    ["heal"] = "[[File:HealIcon_SMTIV.png|alt=Healing|Healing|link=Healing Skills]] Healing",
+    ["support"] = "[[File:SupportIcon_SMTIV.png|alt=Support|Support|link=Support Skills]] Support",
+}
+
 -- Render top stat/header sections inside the image-span table.
 -- Covers main stat layouts for MT/KMT/SMT, Persona, Devil Summoner, Devil Survivor, Last Bible, DemiKids, DDS, PQ, Metaphor, and related games.
 function p.renderTop(ctx, result)
@@ -212,21 +227,7 @@ function p.renderTop(ctx, result)
                     if k2 > 2 then
                         break
                     elseif k2 % 2 == 1 then -- skill type
-                        prop.skilltypes = {
-                            ["phys"] = "[[File:PhysIcon_SMTIV.png|alt=Physical|Physical|link=Physical Skills]] Physical",
-                            ["gun"] = "[[File:GunIcon2.png|alt=Gun|Gun|link=Gun Skills]] Gun",
-                            ["fire"] = "[[File:FireIcon_SMTIV.png|alt=Fire|Fire|link=Fire Skills]] Fire",
-                            ["ice"] = "[[File:IceIcon_SMTIV.png|alt=Ice|Ice|link=Ice Skills]] Ice",
-                            ["elec"] = "[[File:ElecIcon_SMTIV.png|alt=Electricity|Electricity|link=Electric Skills]] Electricity",
-                            ["force"] = "[[File:ForceIcon.png|alt=Force|Force|link=Wind Skills]] Force",
-                            ["light"] = "[[File:ExpelIcon_SMTIV.png|alt=Light|Light|link=Expel Skills]] Light",
-                            ["dark"] = "[[File:CurseIcon_SMTIV.png|alt=Dark|Dark|link=Death Skills]] Dark",
-                            ["almighty"] = "[[File:AlmightyIcon_SMTIV.png|alt=Almighty|Almighty|link=Almighty Skills]] Almighty",
-                            ["ailment"] = "[[File:AilmentIcon_SMTIV.png|alt=Ailment|Ailment|link=Ailment Skills]] Ailment",
-                            ["heal"] = "[[File:HealIcon_SMTIV.png|alt=Healing|Healing|link=Healing Skills]] Healing",
-                            ["support"] = "[[File:SupportIcon_SMTIV.png|alt=Support|Support|link=Support Skills]] Support",
-                        }
-                        result = result .. '<span style="white-space:nowrap">' .. prop.skilltypes[v2:lower()]
+                        result = result .. '<span style="white-space:nowrap">' .. smt4_skilltypes[v2:lower()]
                     elseif k2 % 2 == 0 then -- modifier
                         if string.sub(v2, 1, 1) == "+" then
                             result = result .. ' <span style="color:#5f5">' .. v2 .. "</span></span>"

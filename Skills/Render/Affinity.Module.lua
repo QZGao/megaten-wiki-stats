@@ -24,22 +24,25 @@ local function formatResistance(styles, v, denominator, game)
         v = 'color:cyan" title="150% Reflect"|<span style="color:white">1.5×</span>Rf'
     elseif v == "2rp" or v == "2rf" then
         v = 'color:cyan" title="Double Reflect"|<span style="color:white">2×</span>Rf'
-    elseif tonumber(v) == 0 then
-        v = 'color:white" title="Null"|Nu'
-    elseif tonumber(v) == 1 then
-        v = '" title="Normal"| -'
-    elseif tonumber(v) < 1 then
-        v = 'color:teal"  title="Resist"|' .. frac((tonumber(v) * denominator), denominator)
-    elseif tonumber(v) > 2 then
-        v = 'color:red" title="Weak"|' .. v .. "×"
-    elseif tonumber(v) > 1.3 then
-        if game == "smt1" or game == "smt2" or game == "smtif" then
-            v = 'color:orange" title="Vulnerable"|' .. v .. "×"
-        else
+    else
+        local resistance_number = tonumber(v)
+        if resistance_number == 0 then
+            v = 'color:white" title="Null"|Nu'
+        elseif resistance_number == 1 then
+            v = '" title="Normal"| -'
+        elseif resistance_number < 1 then
+            v = 'color:teal"  title="Resist"|' .. frac((resistance_number * denominator), denominator)
+        elseif resistance_number > 2 then
             v = 'color:red" title="Weak"|' .. v .. "×"
+        elseif resistance_number > 1.3 then
+            if game == "smt1" or game == "smt2" or game == "smtif" then
+                v = 'color:orange" title="Vulnerable"|' .. v .. "×"
+            else
+                v = 'color:red" title="Weak"|' .. v .. "×"
+            end
+        elseif resistance_number > 1.1 then
+            v = 'color:orange" title="Vulnerable"|' .. v .. "×"
         end
-    elseif tonumber(v) > 1.1 then
-        v = 'color:orange" title="Vulnerable"|' .. v .. "×"
     end
     return styles.statlow3 .. v
 end

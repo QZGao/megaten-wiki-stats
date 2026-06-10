@@ -4,6 +4,7 @@ local Row = require("Module:Skills/Row")
 local Render = require("Module:Skills/Render")
 
 local p = {}
+local isArticleNamespace
 
 -- Build a public #invoke wrapper that parses template arguments before calling an implementation.
 -- Used by the exported stats and row entry points for every supported game.
@@ -35,7 +36,11 @@ end
 -- Emit a category only when rendering in the article namespace.
 -- Used by all game renderers that attach maintenance, race, alignment, boss, demon, Persona, or item categories.
 local function cate(catename)
-    if mw.title.getCurrentTitle():inNamespace("") then
+    if isArticleNamespace == nil then
+        isArticleNamespace = mw.title.getCurrentTitle():inNamespace("")
+    end
+
+    if isArticleNamespace then
         return "[[Category:" .. catename .. "]]"
     else
         return ""
@@ -199,6 +204,13 @@ local race_names = {
     ["Rebel God"] = { "Rebel God", exclusive = "Rebel God", catename = false },
 }
 
+local race_name_index = {}
+for key, race_data in pairs(race_names) do
+    for _, name in ipairs(race_data) do
+        race_name_index[name] = { key = key, data = race_data }
+    end
+end
+
 -- Convert a race name into linked display text plus race categories.
 -- Used by top stat renderers across MT/KMT/SMT, Devil Summoner/Raidou, Persona, Devil Survivor, DemiKids, DDS, and related games.
 local function getRace(race, game, abbr)
@@ -264,30 +276,30 @@ local function getRace(race, game, abbr)
     elseif race == "Star 2" then
         result = "[[Triangulum|Star]]" .. cate("Star Race")
     end
-    for k, v in pairs(race_names) do
-        for _, name in ipairs(v) do
-            if race == name then
-                if abbr then
-                    abbr = '<abbr title="' .. abbr .. '">' .. name .. "</abbr>"
-                else
-                    abbr = name
-                end
-                if v.exclusive then
-                    result = "[[Enemy exclusive race#" .. v.exclusive .. "|" .. abbr .. "]]"
-                elseif v.linkdab then
-                    result = "[[" .. k .. " (race)|" .. abbr .. "]]"
-                elseif v.link then
-                    result = "[[" .. v.link .. "|" .. abbr .. "]]"
-                else
-                    result = "[[" .. k .. "|" .. abbr .. "]]"
-                end
-                if v.catename == false then
-                elseif v.catename then
-                    result = result .. cate(v.catename)
-                else
-                    result = result .. cate(k .. " Race")
-                end
-            end
+
+    local race_entry = race_name_index[race]
+    if race_entry then
+        local k = race_entry.key
+        local v = race_entry.data
+        if abbr then
+            abbr = '<abbr title="' .. abbr .. '">' .. race .. "</abbr>"
+        else
+            abbr = race
+        end
+        if v.exclusive then
+            result = "[[Enemy exclusive race#" .. v.exclusive .. "|" .. abbr .. "]]"
+        elseif v.linkdab then
+            result = "[[" .. k .. " (race)|" .. abbr .. "]]"
+        elseif v.link then
+            result = "[[" .. v.link .. "|" .. abbr .. "]]"
+        else
+            result = "[[" .. k .. "|" .. abbr .. "]]"
+        end
+        if v.catename == false then
+        elseif v.catename then
+            result = result .. cate(v.catename)
+        else
+            result = result .. cate(k .. " Race")
         end
     end
     if not result then return race end
@@ -399,11 +411,15 @@ end
 local function bar(color, stat, ratio, cap, stat2, old, new)
 	-- ratio is the length (in pixel) of each point. Cap times ratio equals max length of the stat bar.
     local stat_st, stat_width
+    local stat_number, stat2_number
+    if stat ~= "i" then stat_number = tonumber(stat) end
+    if stat2 then stat2_number = tonumber(stat2) end
     if stat == "i" then
         stat = "i"
-    elseif not tonumber(stat) then
+    elseif not stat_number then
         stat_st = '<span style="color:#666">--</span>'
         stat = 0
+        stat_number = 0
         stat_width = 0
     elseif stat2 then
         stat_st = '<span style="color:#aff;cursor:help" title="' .. old .. ": " .. stat .. "; " .. new .. ": " .. stat2 .. '">' .. stat2 .. "</span>"
@@ -411,19 +427,19 @@ local function bar(color, stat, ratio, cap, stat2, old, new)
         stat_st = stat
     end
     if stat == "i" then
-    elseif tonumber(stat) > cap then
+    elseif stat_number > cap then
         stat_width = cap * ratio
         color = "#aaf"
     elseif stat_width ~= 0 then
-        stat_width = tonumber(stat) * ratio
+        stat_width = stat_number * ratio
     end
     if tostring(stat_st) == "+0" then stat_st = '<span style="color:#666">--</span>' end
     if stat == "i" then
         return "--\n|Inherit\n|-"
     elseif stat2 then
-        return stat_st .. '\n|style="border-radius:10px;background-color:#000;background:linear-gradient(90deg, #2c2a46, #000);width:' .. cap * ratio + 3 .. 'px"|<div style="overflow:hidden"><div style="cursor:help;float:left;border-top:5px solid ' .. color .. ";width:" .. stat_width .. 'px" title="' .. old .. ": " .. stat .. '"></div><div style="cursor:help;float:left;border-top:5px solid #aff;width:' .. tonumber(stat2) * ratio - stat_width .. 'px" title="' .. new .. ": " .. stat2 .. '"></div></div>\n|-'
+        return stat_st .. '\n|style="border-radius:10px;background-color:#000;background:linear-gradient(90deg, #2c2a46, #000);width:' .. cap * ratio + 3 .. 'px"|<div style="overflow:hidden"><div style="cursor:help;float:left;border-top:5px solid ' .. color .. ";width:" .. stat_width .. 'px" title="' .. old .. ": " .. stat .. '"></div><div style="cursor:help;float:left;border-top:5px solid #aff;width:' .. stat2_number * ratio - stat_width .. 'px" title="' .. new .. ": " .. stat2 .. '"></div></div>\n|-'
     else
-        return stat_st .. '\n|style="border-radius:10px;background-color:#000;background:linear-gradient(90deg, #2c2a46, #000);width:' .. cap * ratio + 3 .. 'px"|<div style="overflow:hidden"><div style="float:left;border-top:5px solid ' .. color .. ";width:" .. stat_width .. 'px"></div><div style="float:left;border-top:5px solid transparent;width:' .. (cap - tonumber(stat)) * ratio .. 'px"></div></div>\n|-'
+        return stat_st .. '\n|style="border-radius:10px;background-color:#000;background:linear-gradient(90deg, #2c2a46, #000);width:' .. cap * ratio + 3 .. 'px"|<div style="overflow:hidden"><div style="float:left;border-top:5px solid ' .. color .. ";width:" .. stat_width .. 'px"></div><div style="float:left;border-top:5px solid transparent;width:' .. (cap - stat_number) * ratio .. 'px"></div></div>\n|-'
     end
 end
 

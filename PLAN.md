@@ -2,162 +2,179 @@
 
 ## Priorities
 
-- Preserve exact rendered output unless a behavior change is explicitly requested.
-- Prefer efficiency improvements over purely aesthetic refactors.
-- Keep cleanup batches small enough that sandbox2 vs sandbox3 exact render parity can identify regressions quickly.
-- Avoid distant predicate helpers and one-use boolean locals unless they remove real repeated work.
+- Preserve exact rendered output unless a behavior change or bug fix is explicitly requested.
+- Prefer efficiency improvements over file splitting or cosmetic refactors.
+- Keep batches small enough that sandbox2 vs sandbox3 exact render parity can isolate regressions quickly.
+- Avoid distant predicate helpers and one-use locals unless they remove repeated work in a hot path.
 - Keep helpers close to the renderer that uses them.
+- Isolate visible output fixes from parity-preserving cleanup.
 
-## Cleanup Order
-
-### 1. Low-risk efficiency cleanup
-
-- In `Skills/Render/Affinity.Module.lua`, load `Module:Skills/<game>/res` once inside the `restype` branch and reuse the local `restypes` table.
-- In `Skills/Render.Module.lua`, split P3R Theurgy characteristics and P5R Persona traits once, then reuse the resulting table for row count and iteration.
-- Remove unused local bindings from `Skills/Render.Module.lua`.
-- Remove unused context fields passed from `Skills.Module.lua` after confirming no child module consumes them.
-
-Verification:
-
-- Run Lua parse checks.
-- Run `git diff --check`.
-- Upload changed modules.
-- Run sandbox exact HTML comparison.
-
-### 2. Remove dead or accidental code
-
-- Remove unused `createEquipTable` from `Skills.Module.lua` if still unreferenced.
-- Remove its context plumbing.
-- Audit accidental globals, especially `inherit = "Inherit"` in `bar`.
-- Audit bare `race == "Boss"` checks in `Skills/Render/Stats.Module.lua`.
-
-Notes:
-
-- Accidental global fixes can technically alter behavior. Keep them isolated from unrelated cleanup.
-- If a questionable legacy branch may depend on a bug, verify with sandbox output before continuing.
-
-### 3. SkillTable parsing efficiency
-
-- In `Skills/Render/SkillTable.Module.lua`, replace repeated `mw.text.split(v1 .. "\\", "\\")` patterns when only the first two parts are needed.
-- Avoid table allocation per skill row where direct string matching can extract `skill` and `level` or metadata.
-- Keep row renderers separate enough that game-specific behavior remains visible.
-
-Verification:
-
-- Compare after each renderer family, not after rewriting the whole file.
-
-### 4. Persona top stat block cleanup
-
-- In `Skills/Render/Stats.Module.lua`, clean the Persona 3/4/5/P5X top stat block.
-- Remove the per-render table allocation in `hasAnyStatBarValue(prop, { "str", "magic", "vit", "agl", "luc" })`.
-- Unify duplicated header/value assembly between stat-bar and no-stat-bar branches.
-- Keep the pending top stat merge behavior unchanged.
-
-Verification:
-
-- Use P3, P4, P5, P5X, and no-stat-bar cases in the sandbox comparison pages.
-
-### 5. Stats render dispatch
-
-Goal:
-
-- Reduce the number of top-level game checks in `Skills/Render/Stats.Module.lua` without changing rendered output.
-- Keep high-traffic game families earlier and cheaper to reach.
-- Preserve every branch that intentionally emits supplemental output in addition to the main top-stat table.
-
-Scope:
-
-- Work inside `Skills/Render/Stats.Module.lua` only unless unused context plumbing becomes obvious after the cleanup.
-- Do not split more modules during this step.
-- Do not rewrite individual game render bodies unless the change directly supports mutually exclusive dispatch.
-
-Branch classification:
-
-- Main render branches should be mutually exclusive because each page has one normalized `game` and one fallback `gameg`.
-- Supplemental branches must stay separate from the main dispatch:
-  - Persona 2/P5-family `prop.quote` rendering can emit before the main stat table.
-  - Any pending top-stat handoff through `ctx.pending_top_stats` must keep its current timing relative to affinity and drop rendering.
-- Category-only or side-effect-heavy branches should not be moved until their output ordering is understood from exact HTML comparison.
-
-Implementation phases:
-
-1. Add a local dispatch key near the top of `p.renderTop`.
-   - Use `gameg` for fallback-family renderers by default.
-   - Use `game` only for game-specific pages that cannot be represented by `gameg`, such as `mt1`, `mt2`, `kmt1`, and `kmt2`.
-   - Avoid allocating a handler table per render.
-
-2. Convert the clearly exclusive early branches first.
-   - Start with `mt1`, `mt2`, `kmt1/kmt2`.
-   - Then convert SMT-family branches: `smt1/smt2/smtif/20xx`, `smt9`, `smt3`, `smtim`, `smtsj`, `smt4/smt4a`, `smt5/smt5v`, and `ldx2`.
-   - After each conversion group, run parser and exact sandbox comparison before continuing.
-
-3. Convert mid-file families after the SMT group passes.
-   - Last Bible and Another Bible.
-   - Majin Tensei/Ronde.
-   - Devil Summoner/Soul Hackers/Soul Hackers 2.
-   - Raidou and Giten.
-
-4. Convert Persona-like families only after the earlier groups pass.
-   - Keep the quote block outside dispatch.
-   - Keep `p2is/p2ep` as its own main branch.
-   - Keep the shared `p3/p3re/p4/p5/p5r/p5s/p5x` top-stat branch as one dispatch target.
-   - Keep `pq/pq2` separate because its table shape is unrelated to the shared Persona top-stat branch.
-
-5. Convert remaining smaller families last.
-   - Catherine.
-   - Digital Devil Saga.
-   - Devil Survivor.
-   - Devil Children groups.
-   - Metaphor can be converted after Persona because it also participates in top-stat merge behavior.
-
-Preferred structure:
-
-- Use an `if` / `elseif` dispatch chain at the top level, not a per-render table of closures.
-- Group related games in compact branch conditions when they share a renderer body.
-- Keep local variables close to the branch that uses them.
-- Do not introduce generic helpers just to shorten branch conditions unless they remove repeated work in multiple branches.
-
-Verification checkpoints:
-
-- Before implementation, confirm the sandbox pages include at least one sample from:
-  - MT/KMT.
-  - SMT mainline.
-  - Persona with stat bars.
-  - Persona without stat bars.
-  - P5X with hidden Arcana/reward rows.
-  - Metaphor.
-  - Devil Children or another late-file branch.
-- After each implementation phase:
-  - Run Lua parse checks.
-  - Run `git diff --check`.
-  - Upload changed modules.
-  - Run exact sandbox comparison.
-  - Stop immediately if the comparison shows any HTML difference.
-
-Notes:
-
-- This is the largest runtime cleanup and the highest parity risk.
-- Preserve legacy ordering for any branch that can intentionally emit alongside another branch.
-- Do not optimize by changing category order, quote placement, or pending top-stat timing.
-
-### 6. Affinity defaulting cleanup
-
-- Reduce repeated `if not prop.x then prop.x = "-" end` clusters where a nearby local table loop is clearer and does not hide behavior.
-- Keep default values local to the game branch that owns them.
-- Avoid a shared defaulting helper unless multiple branches truly share the same field set and default value.
-
-### 7. Row renderer cleanup
-
-- Consider replacing the `Skills/Row.Module.lua` row-code `elseif` chain with a local row-handler map.
-- Keep this late because `#invoke:row` is smaller and lower impact than full stats rendering.
-
-## Ongoing Verification
+## Verification
 
 After each local cleanup batch:
 
-1. Run Lua parsing checks.
+1. Run Lua parse checks for changed Lua modules.
 2. Run `git diff --check`.
-3. Update the corresponding on-wiki sandbox modules.
-4. Run the sandbox2 vs sandbox3 exact HTML comparison.
+3. Report changed upload targets.
+4. Wait for on-wiki sandbox upload.
+5. Run `python .\compare_sandbox_render.py`.
+6. Stop immediately if exact HTML comparison shows any difference.
 
-Do not begin the next cleanup batch until exact render parity passes.
+## Cleanup Order
+
+### 1. Hot-path low-risk efficiency
+
+- In `Skills.Module.lua`, cache the article-namespace check used by `cate()`.
+  - Current issue: `mw.title.getCurrentTitle():inNamespace("")` is called every time a category is emitted.
+  - Expected benefit: removes repeated title lookups across all category-heavy render paths.
+  - Risk: very low if cached lazily inside `cate()`.
+
+- In `Skills.Module.lua`, build a module-level race alias index for `getRace()`.
+  - Current issue: every `getRace()` call scans all `race_names` entries and their aliases.
+  - Expected benefit: constant-time lookup for the common race/category path.
+  - Notes: no duplicate positional race aliases were found. Preserve the existing special-case branches before index lookup.
+  - Risk: low if output construction keeps the same metadata fields and ordering.
+
+- In `Skills.Module.lua`, cache numeric conversions inside `bar()`.
+  - Current issue: `tonumber(stat)` and `tonumber(stat2)` are called repeatedly per stat bar.
+  - Expected benefit: cheaper stat-bar rendering across most top stat tables.
+  - Risk: low if `i`, non-numeric, comparison, and old/new cases stay in the same order.
+
+- In `Skills/Render/Affinity.Module.lua`, cache numeric conversion inside `formatResistance()`.
+  - Current issue: `tonumber(v)` is called repeatedly for every resistance cell.
+  - Expected benefit: cheaper `restype` rendering.
+  - Risk: low if symbolic values still short-circuit before numeric comparisons.
+
+- In `Skills/Render/Stats.Module.lua`, move the SMT4 specialty icon table out of the inner loop.
+  - Current issue: `prop.skilltypes = { ... }` is allocated inside the per-specialty inner loop.
+  - Expected benefit: removes repeated table allocation and avoids unnecessary mutation of `prop`.
+  - Risk: low if the table contents and output order are unchanged.
+
+### 2. Loop parsing efficiency
+
+- In `Skills/Render/Stats.Module.lua`, replace `mw.text.split(v1 .. "\\", "\\")` pair parsing in specialty handling with direct two-field parsing.
+  - Affected areas: SMT4 specialty and SMT5 skill potential.
+  - Expected benefit: avoids per-line split-table allocation when only two fields are used.
+  - Risk: moderate because malformed specialty lines must preserve legacy behavior.
+
+- In `Skills/Render/Affinity.Module.lua`, replace `mw.text.split(v1 .. "\\", "\\")` pair parsing in SMT9 resistance levels with direct two-field parsing.
+  - Expected benefit: avoids per-line split-table allocation.
+  - Risk: moderate for malformed lines and trailing separators.
+
+- In `Skills/Render.Module.lua`, reduce split allocation for P3R Theurgy characteristics and P5R Persona traits.
+  - Current issue: branches split once to count rows, then split individual lines again.
+  - Expected benefit: small but local cleanup.
+  - Risk: low if single-row and multi-row behavior stays distinct.
+
+### 3. SkillTable row-loop efficiency
+
+- In `Skills/Render/SkillTable.Module.lua`, consider a newline iterator for long skill-list parameters.
+  - Current issue: every renderer uses `mw.text.split(..., "\n")`, allocating a table of all rows before rendering.
+  - Expected benefit: lower memory churn for long skill lists.
+  - Risk: moderate because trailing empty lines and empty skill-name errors must remain exact.
+
+- In `Skills/Render/SkillTable.Module.lua`, continue replacing split-table parsing with direct field parsing where only the first two fields are used.
+  - Current status: `splitBackslashPair()` already handles several row types.
+  - Remaining target: combo attack parsing still uses `mw.text.split(v1, "\\")` because it needs all fields.
+  - Risk: low for two-field formats, higher for combo attacks.
+
+- In `Skills/Render/SkillTable.Module.lua`, audit shared row assembly for repeated `skillcell`, `cost`, and `effect` setup.
+  - Goal: reduce duplicate per-row work only where it does not hide game-specific behavior.
+  - Risk: moderate. Avoid broad generic row builders unless they remove real repeated work.
+
+### 4. Metadata lookup cleanup
+
+- In `Skills.Module.lua`, compute and pass `gameData` and `baseGameData` through context.
+  - Current issue: render modules repeatedly index `getGames.games[gameg]` and `getGames.games[game]`.
+  - Expected benefit: cheaper and clearer access to game metadata.
+  - Risk: low if existing `getGames` remains available during migration.
+
+- In `Skills/Render.Module.lua`, stop mutating shared SMT3 game metadata for `colorbg`.
+  - Current issue: `getGames.games[gameg].colorbg = getGames.games[gameg].colorbg2` mutates shared metadata.
+  - Expected benefit: safer style construction.
+  - Risk: moderate because output color behavior must remain exact.
+
+- In `Skills/Style.Module.lua`, avoid mutating `gameData.statt` while building styles.
+  - Current issue: defaulting `gameData.statt` writes to shared metadata.
+  - Expected benefit: cleaner style isolation.
+  - Risk: low if `styles.barh` still receives `#529488` as the fallback.
+
+### 5. Stats render cleanup
+
+- In `Skills/Render/Stats.Module.lua`, reduce repeated default assignment clusters where local defaults are clearer and do not change behavior.
+  - Examples: SMT4/SMT5/SH2 affinity defaults, PQ drop defaults, Devil Children defaults.
+  - Risk: low to moderate depending on whether `nil` and empty string must remain distinct.
+
+- In `Skills/Render/Stats.Module.lua`, keep cleaning high-traffic shared layouts before rare branches.
+  - Priority: SMT4/SMT5, Persona/P5X, Metaphor, Devil Survivor.
+  - Goal: remove repeated metadata lookups and repeated string fragments without splitting more modules.
+
+- In `Skills/Render/Stats.Module.lua`, leave branch extraction for later unless it directly improves runtime behavior.
+  - The module is large, but pure movement does not help performance.
+  - Any function extraction should be justified by repeated work, not line count.
+
+### 6. Affinity render cleanup
+
+- In `Skills/Render/Affinity.Module.lua`, remove local wrapper closures inside `renderPost()`.
+  - Current issue: `resoutput()` and `outputResAsPercent()` are recreated per render and only forward to module-level helpers.
+  - Expected benefit: small allocation reduction.
+  - Risk: low.
+
+- In `Skills/Render/Affinity.Module.lua`, consolidate repeated P2 element label setup only if kept local to the P2 branches.
+  - Current issue: P2 labels are built in both the regular P2 affinity branch and the `restype` branch.
+  - Expected benefit: less duplication.
+  - Risk: moderate because helper distance can hurt maintainability. Keep it close.
+
+- In `Skills/Render/Affinity.Module.lua`, audit branch condition precedence.
+  - Example: `gameg == "pq" or gameg == "pq2" and (...)` relies on Lua precedence.
+  - This may be intentional. Do not change behavior without a dedicated parity check.
+
+### 7. Drops and coordinator cleanup
+
+- In `Skills/Render/Drops.Module.lua`, reduce repeated defaulting where it is branch-local and parity-safe.
+  - P4 and P5-family reward rows are candidates.
+  - P5X hidden-row behavior must remain unchanged.
+
+- In `Skills/Render.Module.lua`, consider localizing long SMT3 recruit text mapping.
+  - Current issue: a long `elseif` chain maps normalized recruit strings to output text.
+  - Expected benefit: faster lookup and easier maintenance.
+  - Risk: moderate. Preserve exact aliases and output strings.
+
+- In `Skills/Render.Module.lua`, avoid repeated title lookup for SMTIM and Dx2 `seealso` defaults after `cate()` caching is done.
+  - Expected benefit: small.
+  - Risk: low.
+
+### 8. Correctness fixes to isolate
+
+- In `Skills/Render/Stats.Module.lua`, fix the Another Bible invalid `tech` fallback.
+  - Current issue: when a tech is missing and has no alias, code appears to assign `prop.techc.effect` while `prop.techc` is nil.
+  - This is a bug fix, not parity cleanup.
+  - Test with an invalid Another Bible technique sample.
+
+- In `Skills/Render/Stats.Module.lua`, remove the duplicate Catherine `mp` default line.
+  - Current issue: `if not prop.mp then prop.mp = "?" end` appears twice.
+  - Risk: very low, but keep it in a dead-code batch.
+
+- In `Skills/Render/Stats.Module.lua`, remove the no-op `if not prop.spell then prop.spell = prop.spell end`.
+  - Current issue: no behavior effect.
+  - Risk: very low.
+
+- In `Skills/Render/SkillTable.Module.lua`, fix the malformed P5S combo attack span style.
+  - Current issue: `<span style="font-weight:bold;>` is missing a quote.
+  - This changes visible HTML and must be isolated as a bug fix.
+  - Test with a P5S combo attack sample.
+
+### 9. Later structural cleanup
+
+- Do not split more files unless a module becomes difficult to verify after efficiency work.
+- If splitting resumes, prefer the existing structure:
+  - `Module:Skills`
+  - `Module:Skills/Style`
+  - `Module:Skills/Row`
+  - `Module:Skills/Render`
+  - `Module:Skills/Render/Stats`
+  - `Module:Skills/Render/Affinity`
+  - `Module:Skills/Render/Drops`
+  - `Module:Skills/Render/SkillTable`
+- Avoid creating small one-purpose modules for miscellaneous sections.
+- Keep exact render parity as the gate after each batch.
