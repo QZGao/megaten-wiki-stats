@@ -48,6 +48,31 @@ local function splitBackslashPair(text)
     return string.sub(text, 1, firstSlash - 1), string.sub(text, firstSlash + 1, secondSlash - 1)
 end
 
+-- Iterate literal newline-separated skill parameters without allocating a split table.
+-- Preserves trailing empty lines so legacy empty-skill errors still render.
+local function eachLine(text)
+    local index = 0
+    local position = 1
+    local done = false
+
+    return function()
+        if done then
+            return nil
+        end
+
+        index = index + 1
+        local newline = string.find(text, "\n", position, true)
+        if newline then
+            local line = string.sub(text, position, newline - 1)
+            position = newline + 1
+            return index, line
+        end
+
+        done = true
+        return index, string.sub(text, position)
+    end
+end
+
 -- Append one cell to a three-column skill grid.
 -- Some legacy non-boss grids center the seventh skill by padding both sides.
 local function appendThreeColumnGridCell(result, styles, index, cell, centerSeventh)
@@ -92,7 +117,7 @@ end
 local function appendThreeColumnSkillCells(ctx, result, lines, options)
     local styles = ctx.styles
 
-    for index, code in ipairs(mw.text.split(lines, "\n")) do
+    for index, code in eachLine(lines) do
         result = appendThreeColumnGridCell(result, styles, index, buildThreeColumnSkillCell(ctx, code, options), options and options.centerSeventh)
     end
     return result
@@ -263,7 +288,7 @@ local function renderDefaultSkills(ctx, result)
     local skill, skillcell, cost, effect
 
     result = result .. styles.table2 .. styles.h .. "colspan=3|[[List of " .. gamegn .. " Skills|" .. styles.spanc .. "Default Skills</span>]]" .. styles.skill .. "Skill" .. styles.skillc .. "Cost" .. styles.skillc .. "Effect"
-    for k, v in ipairs(mw.text.split(prop.dskills, "\n")) do
+    for k, v in eachLine(prop.dskills) do
         v, skill = resolveSkill(data, v)
         if v == "" then
             skillcell = ""
@@ -302,7 +327,7 @@ local function renderMajin2SkillRows(ctx, result)
     local skill, skillcell, cost, effect, power, range, target
 
     result = result .. styles.skill .. "Skill" .. styles.skillc .. "Power" .. styles.skillc .. "Range" .. styles.skillc .. "Cost" .. styles.skillc .. "Target" .. styles.skillc .. "Effect"
-    for k, v in ipairs(mw.text.split(prop.skills, "\n")) do
+    for k, v in eachLine(prop.skills) do
         v, skill = resolveSkill(data, v)
         if v == "" then
             skillcell = ""
@@ -358,7 +383,7 @@ local function renderSkillCostEffectRows(ctx, result)
     local skill, skillcell, cost, effect
 
     result = result .. styles.skill .. "Skill" .. styles.skillc .. "Cost" .. styles.skillc .. "Effect"
-    for k, v in ipairs(mw.text.split(prop.skills, "\n")) do
+    for k, v in eachLine(prop.skills) do
         v, skill = resolveSkill(data, v)
         if v == "" then
             skillcell = ""
@@ -407,7 +432,7 @@ local function renderSkillEffectRows(ctx, result)
     local skill, skillcell, effect
 
     result = result .. styles.skill .. "Skill" .. styles.skillc .. "Effect"
-    for k1, v1 in ipairs(mw.text.split(prop.skills, "\n")) do
+    for k1, v1 in eachLine(prop.skills) do
         local marker
         v1, marker = splitBackslashPair(v1)
         v1, skill = resolveSkill(data, v1)
@@ -448,7 +473,7 @@ local function renderSkillElementCostEffectRows(ctx, result)
     local skill, skillcell, skille, cost, effect
 
     result = result .. styles.skill .. "Skill" .. styles.skillc .. "Element" .. styles.skillc .. "Cost" .. styles.skillc .. "Effect"
-    for k, v in ipairs(mw.text.split(prop.skills, "\n")) do
+    for k, v in eachLine(prop.skills) do
         v, skill = resolveSkill(data, v)
         if v == "" then
             skillcell = ""
@@ -496,7 +521,7 @@ local function renderRankSkillRows(ctx, result)
     else
         result = result .. "Rank" .. styles.skillc .. "Skill" .. styles.skillc .. "Effect"
     end
-    for k1, v1 in ipairs(mw.text.split(prop.skills, "\n")) do
+    for k1, v1 in eachLine(prop.skills) do
         local rank
         rank, v1 = splitBackslashPair(v1)
         result = result .. styles.skill .. formatRankLabel(rank)
@@ -567,7 +592,7 @@ local function renderMajin1SkillRows(ctx, result)
     local skill, skillcell, cost, effect, power, range, target
 
     result = result .. styles.skill .. "Skill" .. styles.skillc .. "Cost" .. styles.skillc .. "Power" .. styles.skillc .. "Range" .. styles.skillc .. "Target" .. styles.skillc .. "Effect"
-    for k, v in ipairs(mw.text.split(prop.skills, "\n")) do
+    for k, v in eachLine(prop.skills) do
         v, skill = resolveSkill(data, v)
         if v == "" then
             skillcell = ""
@@ -629,7 +654,7 @@ local function renderDefaultSkillRows(ctx, result)
     else
         result = result .. styles.skillc .. "Cost" .. styles.skillc .. "Effect" .. styles.skillc .. "Level"
     end
-    for k1, v1 in ipairs(mw.text.split(prop.skills, "\n")) do -- Any entry on new line within "Skills" parameter is treated as new skill name.
+    for k1, v1 in eachLine(prop.skills) do -- Any entry on new line within "Skills" parameter is treated as new skill name.
         local level
         v1, level = splitBackslashPair(v1) -- Entry after backslash is treated as the level; later entries are ignored.
         v1, skill = resolveSkill(data, v1)
@@ -735,7 +760,7 @@ local function renderPersona2FusionRows(ctx, result)
     local skill, skillcell, cost, effect
 
     result = result .. "|[[List of " .. gamegn .. " Fusion Spells|" .. styles.spanc .. "Unique Fusion Spells</span>]]" .. styles.skill .. "Skill" .. styles.skillc .. "Effect" .. styles.skillc .. "Order/Skill/Persona"
-    for k, v in ipairs(mw.text.split(prop.fskills, "\n")) do
+    for k, v in eachLine(prop.fskills) do
         v, skill = resolveSkill(data, v)
         if v == "" then
             skillcell = ""
@@ -794,7 +819,7 @@ local function renderMetaphorSynthesisRows(ctx, result)
     local skill
 
     result = result .. "|[[List of Metaphor: ReFantazio Skills#Synthesis Skills|" .. styles.spanc .. "Synthesis Skills</span>]]" .. styles.skill .. "Skill" .. styles.skillc .. "Cost" .. styles.skillc .. "Effect" .. styles.skillc .. "Skill prerequisite" .. styles.skillc .. "First ally" .. styles.skillc .. "Second ally"
-    for k, v in ipairs(mw.text.split(prop.fskills, "\n")) do
+    for k, v in eachLine(prop.fskills) do
         v, skill = resolveSkill(data, v, data.syntheses)
         if v == "" then
             result = result .. noskill()
@@ -823,7 +848,7 @@ local function renderChildLightFusionRows(ctx, result)
     local skill, skillcell, skille, cost, effect
 
     result = result .. "|[[List of DemiKids Light/Dark Version Skills#Combos|" .. styles.spanc .. "Combos</span>]]" .. styles.skill .. "Combo" .. styles.skillc .. "Element" .. styles.skillc .. "Cost" .. styles.skillc .. "Effect" .. styles.skillc .. "Partner"
-    for k1, v1 in ipairs(mw.text.split(prop.fskills, "\n")) do
+    for k1, v1 in eachLine(prop.fskills) do
         local partner
         v1, partner = splitBackslashPair(v1) -- Entry after backslash after skill name is treated as "partner".
         v1, skill = resolveSkill(data, v1)
@@ -968,7 +993,7 @@ local function renderComboAttacks(ctx, result)
 
     result = result .. styles.table2 .. styles.h .. 'colspan="4" style="background-color: ' .. gameData.colorb .. ";background: linear-gradient(120deg, " .. gameData.colorb .. " 40%, #000 40.1%, #000 41%, #fff 41.1%, #fff 59%, #000 59.1%, #000 60%, " .. gameData.colorb .. ' 60.1%"|[[Combo Attacks|<span style="color:black;text-shadow:-3px 3px 3px #0ff">Combo Attacks</span>]]'
     result = result .. styles.skill .. "Combo Attack" .. styles.skillc .. "Button Input" .. styles.skill3 .. '" colspan=2|Skills'
-    for _, v1 in ipairs(mw.text.split(prop.cskills, "\n")) do
+    for _, v1 in eachLine(prop.cskills) do
         skillcell = ""
         local comboParts = mw.text.split(v1, "\\")
         local v_cnt = #comboParts - 1
