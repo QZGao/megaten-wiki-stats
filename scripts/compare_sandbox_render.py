@@ -9,20 +9,21 @@ from __future__ import annotations
 
 import argparse
 import difflib
-import json
+import os
 import re
 import sys
 from pathlib import Path
 from typing import Tuple
-from urllib.error import HTTPError, URLError
-from urllib.parse import unquote, urlencode, urlsplit
-from urllib.request import Request, urlopen
+from urllib.parse import unquote, urlsplit
 
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+os.environ.setdefault("PYWIKIBOT_DIR", str(PROJECT_ROOT))
 
-DEFAULT_API = "https://megamitensei.fandom.com/api.php"
+import pywikibot
+
 DEFAULT_LEFT = "https://megamitensei.fandom.com/wiki/User:Greykid/sandbox2"
 DEFAULT_RIGHT = "https://megamitensei.fandom.com/wiki/User:Greykid/sandbox3"
-USER_AGENT = "StatsModuleRenderCompare/1.0 (https://github.com/QZGao/megaten-wiki-stats/blob/main/compare_sandbox_render.py)"
+SCRIPT_TIMEOUT_MESSAGE = "The time allocated for running scripts has expired"
 
 
 def title_from_page_arg(value: str) -> str:
@@ -36,10 +37,10 @@ def title_from_page_arg(value: str) -> str:
     return unquote(value).replace("_", " ")
 
 
-def fetch_rendered_html(api_url: str, page: str, timeout: float) -> str:
-    params = {
+def parse_request_params(page: str) -> dict[str, str]:
+    """Build action=parse parameters for rendered article HTML."""
+    return {
         "action": "parse",
-        "format": "json",
         "formatversion": "2",
         "page": page,
         "prop": "text",
@@ -47,12 +48,10 @@ def fetch_rendered_html(api_url: str, page: str, timeout: float) -> str:
         "disablelimitreport": "1",
         "disabletoc": "1",
     }
-    url = f"{api_url}?{urlencode(params)}"
-    request = Request(url, headers={"User-Agent": USER_AGENT})
 
-    with urlopen(request, timeout=timeout) as response:
-        payload = json.load(response)
 
+def extract_parse_text(payload: dict, page: str) -> str:
+    """Extract parse.text from a MediaWiki API response."""
     if "error" in payload:
         error = payload["error"]
         code = error.get("code", "unknown")
@@ -60,9 +59,69 @@ def fetch_rendered_html(api_url: str, page: str, timeout: float) -> str:
         raise RuntimeError(f"API error for {page!r}: {code}: {info}")
 
     try:
-        return payload["parse"]["text"]
+        text = payload["parse"]["text"]
     except KeyError as exc:
         raise RuntimeError(f"API response for {page!r} did not include parse.text") from exc
+
+    if isinstance(text, dict):
+        try:
+            return text["*"]
+        except KeyError as exc:
+            raise RuntimeError(f"API response for {page!r} did not include parse.text.*") from exc
+    return text
+
+
+def build_pywikibot_site():
+    """Create the pywikibot site configured for this repository."""
+    try:
+        site = pywikibot.Site()
+        site.login()
+        return site
+    except Exception as exc:
+        raise RuntimeError(f"could not initialize pywikibot site: {exc}") from exc
+
+
+def purge_page(page: pywikibot.Page) -> None:
+    """Purge the page cache before requesting rendered parser HTML."""
+    try:
+        if not page.purge(forcelinkupdate=True):
+            raise RuntimeError("purge returned false")
+    except Exception as exc:
+        raise RuntimeError(f"purge failed for {page.title()!r}: {exc}") from exc
+
+
+def fetch_rendered_html(site, page: str) -> str:
+    """Fetch rendered page HTML through pywikibot's MediaWiki API wrapper."""
+    try:
+        request = site.simple_request(**parse_request_params(page))
+        payload = request.submit()
+    except Exception as exc:
+        raise RuntimeError(f"pywikibot request failed for {page!r}: {exc}") from exc
+    return extract_parse_text(payload, page)
+
+
+def fetch_rendered_html_after_purge(site, page_title: str) -> str:
+    """Purge, fetch, and retry once if Lua execution timed out in the render."""
+    page = pywikibot.Page(site, page_title)
+    purge_page(page)
+    html = fetch_rendered_html(site, page_title)
+    if SCRIPT_TIMEOUT_MESSAGE in html:
+        purge_page(page)
+        html = fetch_rendered_html(site, page_title)
+        if SCRIPT_TIMEOUT_MESSAGE in html:
+            raise RuntimeError(
+                f"rendered HTML for {page_title!r} still contains script-timeout output after two purges"
+            )
+    return html
+
+
+def fetch_rendered_pair(left_title: str, right_title: str) -> Tuple[str, str]:
+    """Fetch both rendered pages with the configured pywikibot site."""
+    site = build_pywikibot_site()
+    return (
+        fetch_rendered_html_after_purge(site, left_title),
+        fetch_rendered_html_after_purge(site, right_title),
+    )
 
 
 def safe_filename(page: str) -> str:
@@ -157,7 +216,6 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("left", nargs="?", default=DEFAULT_LEFT, help="First page URL or title.")
     parser.add_argument("right", nargs="?", default=DEFAULT_RIGHT, help="Second page URL or title.")
-    parser.add_argument("--api", default=DEFAULT_API, help="MediaWiki API endpoint.")
     parser.add_argument(
         "--mode",
         choices=("exact", "normalized"),
@@ -177,7 +235,6 @@ def parse_args() -> argparse.Namespace:
         help="Do not ignore known page-specific sandbox differences.",
     )
     parser.add_argument("--out-dir", type=Path, help="Write both HTML renders and render.diff here on mismatch.")
-    parser.add_argument("--timeout", type=float, default=30.0, help="HTTP timeout in seconds.")
     return parser.parse_args()
 
 
@@ -187,9 +244,8 @@ def main() -> int:
     try:
         left_title = title_from_page_arg(args.left)
         right_title = title_from_page_arg(args.right)
-        left_html = fetch_rendered_html(args.api, left_title, args.timeout)
-        right_html = fetch_rendered_html(args.api, right_title, args.timeout)
-    except (HTTPError, URLError, TimeoutError, ValueError, RuntimeError) as exc:
+        left_html, right_html = fetch_rendered_pair(left_title, right_title)
+    except (ValueError, RuntimeError) as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
         return 2
 
