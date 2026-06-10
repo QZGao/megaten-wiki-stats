@@ -25,12 +25,12 @@ function p.renderPersona4Rewards(ctx, result)
     local gamegn = ctx.gamegn
     if (gameg == "p4") and prop.hp then
         result = result .. styles.table2
-        prop.xp = prop.xp or "-"
-        prop.yen = prop.yen or "-"
-        prop.normal = prop.normal or "-"
-        prop.rare = prop.rare or "-"
+        local xp = prop.xp or "-"
+        local yen = prop.yen or "-"
+        local normal = prop.normal or "-"
+        local rare = prop.rare or "-"
         result = result .. styles.h .. "|EXP" .. styles.h .. "|Yen" .. styles.h .. "|[[List of " .. gamegn .. " Items|" .. styles.spanc .. "Normal Drop</span>]]" .. styles.h .. "|[[List of " .. gamegn .. " Items|" .. styles.spanc .. "Rare Drop</span>]]" .. "\n|-\n"
-        result = result .. styles.statlow .. prop.xp .. styles.statlow .. prop.yen .. styles.statlow .. prop.normal .. styles.statlow .. prop.rare
+        result = result .. styles.statlow .. xp .. styles.statlow .. yen .. styles.statlow .. normal .. styles.statlow .. rare
         result = result .. "\n|}"
     end
     return result
@@ -47,35 +47,35 @@ function p.renderPersona5Rewards(ctx, result)
         local has_drop_row = gameg ~= "p5x" or hasFilledValue(prop.xp) or hasFilledValue(prop.yen) or hasFilledValue(prop.normal) or hasFilledValue(prop.material) or hasFilledValue(prop.drop1) or hasFilledValue(prop.drop2) or hasFilledValue(prop.drop3) or hasFilledValue(prop.card) or hasFilledValue(prop.dropc)
         if has_drop_row then
             result = result .. styles.table2
-            prop.xp = prop.xp or "-"
-            prop.yen = prop.yen or "-"
-            prop.normal = prop.normal or "-"
-            prop.material = prop.material or prop.normal
-            prop.drop1 = prop.drop1 or "-"
-            prop.card = prop.card or "-"
-            prop.dropc = prop.dropc or prop.card
+            local xp = prop.xp or "-"
+            local yen = prop.yen or "-"
+            local normal = prop.normal or "-"
+            local material = prop.material or normal
+            local drop1 = prop.drop1 or "-"
+            local card = prop.card or "-"
+            local dropc = prop.dropc or card
             local cnt_drops = 2
             if prop.drop3 then
                 cnt_drops = 4
             elseif prop.drop2 then
                 cnt_drops = 3
             end
-            if prop.drop1 == "-" and prop.dropc == "-" then cnt_drops = 1 end
+            if drop1 == "-" and dropc == "-" then cnt_drops = 1 end
             result = result .. styles.h .. "|EXP" .. styles.h .. "|Yen" .. styles.h .. "|[[Battle Drops|" .. styles.spanc .. "Battle Drop</span>]]" .. styles.h .. "colspan=" .. cnt_drops .. "|[[Negotiation|" .. styles.spanc .. "Negotiation Items</span>]]" .. "\n|-\n"
-            result = result .. styles.statlow .. prop.xp .. styles.statlow .. prop.yen .. styles.statlow .. prop.material .. styles.statlow .. prop.drop1
+            result = result .. styles.statlow .. xp .. styles.statlow .. yen .. styles.statlow .. material .. styles.statlow .. drop1
             if prop.drop2 then result = result .. styles.statlow .. prop.drop2 end
             if prop.drop3 then result = result .. styles.statlow .. prop.drop3 .. " (Rare)" end
-            if prop.dropc ~= "-" then result = result .. styles.statlow .. prop.dropc .. " ([[Skill Card|" .. styles.spanc .. "Skill Card</span>]])" end
+            if dropc ~= "-" then result = result .. styles.statlow .. dropc .. " ([[Skill Card|" .. styles.spanc .. "Skill Card</span>]])" end
             result = result .. "\n|}"
         end
     end
     if (gameg == "sh2") and (prop.xp or prop.yen or prop.normal) then
         result = result .. styles.table2
-        prop.xp = prop.xp or "-"
-        prop.yen = prop.yen or "-"
-        prop.normal = prop.normal or "-"
+        local xp = prop.xp or "-"
+        local yen = prop.yen or "-"
+        local normal = prop.normal or "-"
         result = result .. styles.h .. "|EXP" .. styles.h .. "|Yen" .. styles.h .. "|[[Battle Drops|" .. styles.spanc .. "Battle Drop</span>]]" .. "\n|-\n"
-        result = result .. styles.statlow .. prop.xp .. styles.statlow .. prop.yen .. styles.statlow .. prop.normal
+        result = result .. styles.statlow .. xp .. styles.statlow .. yen .. styles.statlow .. normal
         result = result .. "\n|}"
     end
     return result
