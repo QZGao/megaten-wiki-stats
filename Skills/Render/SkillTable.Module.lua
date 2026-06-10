@@ -1002,7 +1002,7 @@ local function renderComboAttacks(ctx, result)
                 elseif not skill then
                     resv2 = '<span style="color:red;font-weight:bold;font-size:1.2em">Invalid skill name of "' .. v2 .. '". You may correct the skill name or modify [[module:Skills/' .. gamed .. "]] if needed.</span>"
                 else
-                    resv2 = '<span style="font-weight:bold;>' .. displaySkillName(v2, skill) .. "</span>"
+                    resv2 = '<span style="font-weight:bold;">' .. displaySkillName(v2, skill) .. "</span>"
                     resdec = skill.effect
                 end
                 if k2 > 2 then

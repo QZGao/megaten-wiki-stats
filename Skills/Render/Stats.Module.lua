@@ -410,7 +410,12 @@ function p.renderTop(ctx, result)
                     prop.tech = alias
                     prop.techc = data.skills[prop.tech]
                 else
-                    prop.techc.effect = noskill(prop.tech, gamed)
+                    prop.techc = {
+                        cost = "",
+                        range = "",
+                        target = "",
+                        effect = noskill(prop.tech, gamed),
+                    }
                 end
             end
             result = result .. styles.table2 .. styles.h .. "colspan=5|[[List of " .. gamegn .. " Skills#Techniques|" .. styles.spanc .. "Technique</span>]]" .. styles.skill .. "Technique" .. styles.skillc .. "Cost" .. styles.skillc .. "Range" .. styles.skillc .. "Target" .. styles.skillc .. "Description" .. styles.skill .. prop.tech .. styles.cost1 .. prop.techc.cost .. styles.cost1 .. prop.techc.range .. styles.cost1 .. prop.techc.target .. styles.effect1 .. prop.techc.effect .. "\n|}"
@@ -849,7 +854,6 @@ function p.renderTop(ctx, result)
         result = result .. "\n|}"
     elseif render_game == "cs" then
         if not prop.mp then prop.mp = "?" end
-        if not prop.mp then prop.mp = "?" end
         result = result .. styles.table2 .. styles.h .. "|[[Race and species|" .. styles.spanc .. "Race</span>]]" .. styles.h .. "|Level" .. styles.h .. "|HP" .. styles.h .. "|MP" .. styles.h .. 'title="Strength"|St' .. styles.h .. 'title="Endurance"|En' .. styles.h .. 'title="Magic"|Ma' .. styles.h .. 'title="Agility"|Ag\n|-\n' .. styles.statlow .. getRace(prop.race, gameg) .. styles.statlow .. prop.level .. styles.statlow .. prop.hp .. styles.statlow .. prop.mp .. styles.statlow .. prop.str .. styles.statlow .. prop.def .. styles.statlow .. prop.magic .. styles.statlow .. prop.agl .. "\n|}" .. cate(gameData.name2 .. " Demons")
     elseif render_game == "ddsaga1" or render_game == "ddsaga2" then
         if gameg == "ddsaga2" and prop.boss then
@@ -943,14 +947,9 @@ function p.renderTop(ctx, result)
         if not prop.call then prop.call = "-" end
         if not prop.spell then
             prop.spell = "-"
-        else
-            if not data.skills[prop.spell] then
-                prop.spell = prop.spell
-            else
-                prop.spell = '<abbr title="' .. data.skills[prop.spell].effect .. '">' .. prop.spell .. "</abbr>"
-            end
+        elseif data.skills[prop.spell] then
+            prop.spell = '<abbr title="' .. data.skills[prop.spell].effect .. '">' .. prop.spell .. "</abbr>"
         end
-        if not prop.spell then prop.spell = prop.spell end
         result = result .. styles.table2 .. styles.h .. "|Number" .. styles.h .. "|Element" .. styles.h .. "|Weakness" .. styles.h .. "|Type" .. styles.h .. "|Level" .. styles.h .. "|HP" .. styles.h .. "|MP\n|-" .. styles.statlow .. prop.number .. styles.statlow .. prop.element .. styles.statlow .. prop.weak .. styles.statlow .. prop.race .. styles.statlow .. prop.level .. styles.statlow .. prop.hp .. styles.statlow .. prop.mp .. "\n|}"
         result = result .. styles.table2 .. styles.h .. 'title="Attack"|ATK' .. styles.h .. 'title="Magic"|MGC' .. styles.h .. 'title="Defense"|DEF' .. styles.h .. 'title="Resistance"|RES' .. styles.h .. 'title="Speed"|SPD' .. styles.h .. "|Quick" .. styles.h .. "|Call" .. styles.h .. "|Spell\n|-" .. styles.statlow .. prop.atk .. styles.statlow .. prop.magic .. styles.statlow .. prop.def .. styles.statlow .. prop.res .. styles.statlow .. prop.agl .. styles.statlow .. prop.quick .. styles.statlow .. prop.call .. styles.statlow .. prop.spell .. "\n|}" .. cate(prop.race .. " Type") .. bossdemoncat(prop.boss, baseGameData.name2)
     end
