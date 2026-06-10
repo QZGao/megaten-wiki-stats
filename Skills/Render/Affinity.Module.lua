@@ -76,39 +76,39 @@ function p.renderTop(ctx, result)
     local gameg = ctx.gameg
     local appendTopAffinityTable = ctx.appendTopAffinityTable
     if gameg == "smtsj" then
-        if not prop.noa then prop.noa = "-" end
-        if not prop.phys then prop.phys = "-" end
-        if not prop.gun then prop.gun = "-" end
-        if not prop.fire then prop.fire = "-" end
-        if not prop.ice then prop.ice = "-" end
-        if not prop.elec then prop.elec = "-" end
-        if not prop.wind then prop.wind = "-" end
-        if not prop.expel then prop.expel = "-" end
-        if not prop.curse then prop.curse = "-" end
-        if not prop.alm then prop.alm = "-" end
-        if not prop.poison then prop.poison = "-" end
-        if not prop.paralyze then prop.paralyze = "-" end
-        if not prop.stone then prop.stone = "-" end
-        if not prop.strain then prop.strain = "-" end
-        if not prop.sleep then prop.sleep = "-" end
-        if not prop.charm then prop.charm = "-" end
-        if not prop.mute then prop.mute = "-" end
-        if not prop.fear then prop.fear = "-" end
-        if not prop.bomb then prop.bomb = "-" end
-        if not prop.rage then prop.rage = "-" end
+        prop.noa = prop.noa or "-"
+        prop.phys = prop.phys or "-"
+        prop.gun = prop.gun or "-"
+        prop.fire = prop.fire or "-"
+        prop.ice = prop.ice or "-"
+        prop.elec = prop.elec or "-"
+        prop.wind = prop.wind or "-"
+        prop.expel = prop.expel or "-"
+        prop.curse = prop.curse or "-"
+        prop.alm = prop.alm or "-"
+        prop.poison = prop.poison or "-"
+        prop.paralyze = prop.paralyze or "-"
+        prop.stone = prop.stone or "-"
+        prop.strain = prop.strain or "-"
+        prop.sleep = prop.sleep or "-"
+        prop.charm = prop.charm or "-"
+        prop.mute = prop.mute or "-"
+        prop.fear = prop.fear or "-"
+        prop.bomb = prop.bomb or "-"
+        prop.rage = prop.rage or "-"
         result = result .. styles.table2 .. styles.h .. "|Attack Type" .. styles.h .. 'width=7% title="Physical"|[[File:PhysIcon.png|alt=Physical|Physical|link=Physical Skills]]' .. styles.h .. 'width=7% title="Gun"|[[File:GunIcon.png|alt=Gun|Gun|link=Gun Skills]]' .. styles.h .. 'width=7% title="Fire"|[[File:FireIcon.png|alt=Fire|Fire|link=Fire Skills]]' .. styles.h .. 'width=7% title="Ice"|[[File:IceIcon.png|alt=Ice|Ice|link=Ice Skills]]' .. styles.h .. 'width=7% title="Electricity"|[[File:ElecIcon.png|alt=Electricity|Electricity|link=Electric Skills]]' .. styles.h .. 'width=7% title="Wind"|[[File:WindIcon.png|alt=Wind|Wind|link=Wind Skills]]' .. styles.h .. 'width=7% title="Expel"|[[File:ExpelIcon.png|alt=Expel|Expel|link=Expel Skills]]' .. styles.h .. 'width=7% title="Curse"|[[File:CurseIcon.png|alt=Curse|Curse|link=Death Skills]]' .. styles.h .. 'width=7% title="Almighty"|[[File:AlmightyIcon.png|alt=Almighty|Almighty|link=Almighty Skills]]\n|-\n'
         result = result .. styles.statlow .. prop.noa .. styles.statlow .. prop.phys .. styles.statlow .. prop.gun .. styles.statlow .. prop.fire .. styles.statlow .. prop.ice .. styles.statlow .. prop.elec .. styles.statlow .. prop.wind .. styles.statlow .. prop.expel .. styles.statlow .. prop.curse .. styles.statlow .. prop.alm .. "\n|}"
         result = result .. styles.table2 .. styles.h .. "width=10%|Poison" .. styles.h .. "width=10%|Paralyze" .. styles.h .. "width=10%|Stone" .. styles.h .. "width=10%|Strain" .. styles.h .. "width=10%|Sleep" .. styles.h .. "width=10%|Charm" .. styles.h .. "width=10%|Mute" .. styles.h .. "width=10%|Fear" .. styles.h .. "width=10%|Bomb" .. styles.h .. "width=10%|Rage\n|-\n"
         result = result .. styles.statlow .. prop.poison .. styles.statlow .. prop.paralyze .. styles.statlow .. prop.stone .. styles.statlow .. prop.strain .. styles.statlow .. prop.sleep .. styles.statlow .. prop.charm .. styles.statlow .. prop.mute .. styles.statlow .. prop.fear .. styles.statlow .. prop.bomb .. styles.statlow .. prop.rage .. "\n|}"
     end
     if gameg == "desu1" or gameg == "desu2" then
-        if not prop.racial then prop.racial = "-" end
-        if not prop.phys then prop.phys = "-" end
-        if not prop.fire then prop.fire = "-" end
-        if not prop.ice then prop.ice = "-" end
-        if not prop.elec then prop.elec = "-" end
-        if not prop.force then prop.force = "-" end
-        if not prop.mystic then prop.mystic = "-" end
+        prop.racial = prop.racial or "-"
+        prop.phys = prop.phys or "-"
+        prop.fire = prop.fire or "-"
+        prop.ice = prop.ice or "-"
+        prop.elec = prop.elec or "-"
+        prop.force = prop.force or "-"
+        prop.mystic = prop.mystic or "-"
         result = result .. styles.table2 .. styles.h .. "|[[Racial Skill|" .. styles.spanc .. "Racial</span>]] / [[Auto Skill|" .. styles.spanc .. "Auto]] Skill" .. styles.h .. 'width=12% title="Physical"|[[File:PhysIcon.png|alt=Physical|Physical|link=Physical Skills]] Phys' .. styles.h .. 'width=12% title="Fire"|[[File:FireIcon.png|alt=Fire|Fire|link=Fire Skills]] Fire' .. styles.h .. 'width=12% title="Ice"|[[File:IceIcon.png|alt=Ice|Ice|link=Ice Skills]] Ice' .. styles.h .. 'width=12% title="Electricity"|[[File:ElecIcon.png|alt=Electricity|Electricity|link=Electric Skills]] Elec' .. styles.h .. 'width=12% title="Force"|[[File:ForceIcon.png|alt=Force|Force|link=Force Skills]] Force' .. styles.h .. "width=12% title="
         if gameg == "desu1" then
             result = result .. '"Mystic"|[[File:Curse DESU2.png|alt=Mystic|Mystic|link=Curse Skills]] Mystic'
@@ -120,30 +120,30 @@ function p.renderTop(ctx, result)
     if gameg == "ronde" or (gameg == "p3" or gameg == "p3re") or gameg == "p4" or (gameg == "p5" or gameg == "p5r" or gameg == "p5s" or gameg == "p5x") or gameg == "metaphor" then
         if prop.sword or prop.strike or prop.pierce or prop.phys or prop.fire or prop.ice or prop.elec or prop.wind or prop.expel or prop.dark or prop.alm or prop.down or prop.dizzy or prop.freeze or prop.paralyze or prop.poison or prop.charm or prop.distress or prop.panic or prop.fear or prop.rage or prop.xp or prop.yen then
             local affinity_table = styles.table2
-            if not prop.sword then prop.sword = "-" end
-            if not prop.strike then prop.strike = "-" end
-            if not prop.pierce then prop.pierce = "-" end
-            if not prop.phys then prop.phys = "-" end
-            if not prop.gun then prop.gun = "-" end
-            if not prop.fire then prop.fire = "-" end
-            if not prop.ice then prop.ice = "-" end
-            if not prop.elec then prop.elec = "-" end
-            if not prop.wind then prop.wind = "-" end
-            if not prop.psy then prop.psy = "-" end
-            if not prop.nuclear then prop.nuclear = "-" end
-            if not prop.expel then prop.expel = "-" end
-            if not prop.dark then prop.dark = "-" end
-            if not prop.alm then prop.alm = "-" end
-            if not prop.down then prop.down = "-" end
-            if not prop.dizzy then prop.dizzy = "-" end
-            if not prop.freeze then prop.freeze = "?" end
-            if not prop.paralyze then prop.paralyze = "?" end
-            if not prop.poison then prop.poison = "?" end
-            if not prop.charm then prop.charm = "?" end
-            if not prop.distress then prop.distress = "?" end
-            if not prop.panic then prop.panic = "?" end
-            if not prop.fear then prop.fear = "?" end
-            if not prop.rage then prop.rage = "?" end
+            prop.sword = prop.sword or "-"
+            prop.strike = prop.strike or "-"
+            prop.pierce = prop.pierce or "-"
+            prop.phys = prop.phys or "-"
+            prop.gun = prop.gun or "-"
+            prop.fire = prop.fire or "-"
+            prop.ice = prop.ice or "-"
+            prop.elec = prop.elec or "-"
+            prop.wind = prop.wind or "-"
+            prop.psy = prop.psy or "-"
+            prop.nuclear = prop.nuclear or "-"
+            prop.expel = prop.expel or "-"
+            prop.dark = prop.dark or "-"
+            prop.alm = prop.alm or "-"
+            prop.down = prop.down or "-"
+            prop.dizzy = prop.dizzy or "-"
+            prop.freeze = prop.freeze or "?"
+            prop.paralyze = prop.paralyze or "?"
+            prop.poison = prop.poison or "?"
+            prop.charm = prop.charm or "?"
+            prop.distress = prop.distress or "?"
+            prop.panic = prop.panic or "?"
+            prop.fear = prop.fear or "?"
+            prop.rage = prop.rage or "?"
             if gameg == "ronde" then
                 affinity_table = affinity_table .. styles.h .. "width=11%|[[Slash Skills|" .. styles.spanc .. "Slash</span>]]" .. styles.h .. "width=11%|[[Strike Skills|" .. styles.spanc .. "Strike</span>]]" .. styles.h .. "width=11%|[[Ranged Skills|" .. styles.spanc .. "Ranged</span>]]" .. styles.h .. "width=11%|[[Fire Skills|" .. styles.spanc .. "Fire</span>]]" .. styles.h .. "width=11%|[[Ice Skills|" .. styles.spanc .. "Ice</span>]]" .. styles.h .. 'title="Electricity" width=11%|[[Electricity Skills|' .. styles.spanc .. "Elec</span>]]" .. styles.h .. "width=11%|[[Light Skills|" .. styles.spanc .. "Light</span>]]" .. styles.h .. "width=11%|[[Dark Skills|" .. styles.spanc .. "Dark</span>]]" .. styles.h .. 'title="Almighty" width=12%|[[Almighty Skills|' .. styles.spanc .. "Almi</span>]]" .. "\n|-\n"
             elseif gameg == "p3" or gameg == "p3re" then
@@ -175,11 +175,11 @@ function p.renderTop(ctx, result)
             result = appendTopAffinityTable(result, affinity_table)
         elseif prop.inherit or prop.resist or prop.block or prop.absorb or prop.reflect or prop.weak then
             local affinity_table = styles.table2
-            if not prop.inherit then prop.inherit = "-" end
-            if not prop.resist then prop.resist = "-" end
-            if not prop.block then prop.block = "-" end
-            if not prop.absorb then prop.absorb = "-" end
-            if not prop.reflect then prop.reflect = "-" end
+            prop.inherit = prop.inherit or "-"
+            prop.resist = prop.resist or "-"
+            prop.block = prop.block or "-"
+            prop.absorb = prop.absorb or "-"
+            prop.reflect = prop.reflect or "-"
             if not prop.weak then
                 prop.weak = "-"
             else
@@ -225,34 +225,34 @@ function p.renderPost(ctx, result)
         return formatResistancePercent(styles, v)
     end
     if gameg == "p1" and (prop.onehand or prop.twohand or prop.spear or prop.axe or prop.whip or prop.thrown or prop.arrow or prop.fist or prop.handgun or prop.machinegun or prop.shotgun or prop.rifle or prop.tech or prop.rush or prop.fire or prop.ice or prop.wind or prop.earth or prop.elec or prop.nuclear or prop.blast or prop.gravity or prop.expel or prop.miracle or prop.death or prop.curse or prop.nerve or prop.hiero) then
-        if not prop.onehand then prop.onehand = "-" end
-        if not prop.twohand then prop.twohand = "-" end
-        if not prop.spear then prop.spear = "-" end
-        if not prop.axe then prop.axe = "-" end
-        if not prop.whip then prop.whip = "-" end
-        if not prop.thrown then prop.thrown = "-" end
-        if not prop.arrow then prop.arrow = "-" end
-        if not prop.fist then prop.fist = "-" end
-        if not prop.handgun then prop.handgun = "-" end
-        if not prop.machinegun then prop.machinegun = "-" end
-        if not prop.shotgun then prop.shotgun = "-" end
-        if not prop.rifle then prop.rifle = "-" end
-        if not prop.tech then prop.tech = "-" end
-        if not prop.rush then prop.rush = "-" end
-        if not prop.fire then prop.fire = "-" end
-        if not prop.ice then prop.ice = "-" end
-        if not prop.wind then prop.wind = "-" end
-        if not prop.earth then prop.earth = "-" end
-        if not prop.elec then prop.elec = "-" end
-        if not prop.nuclear then prop.nuclear = "-" end
-        if not prop.blast then prop.blast = "-" end
-        if not prop.gravity then prop.gravity = "-" end
-        if not prop.expel then prop.expel = "-" end
-        if not prop.miracle then prop.miracle = "-" end
-        if not prop.death then prop.death = "-" end
-        if not prop.curse then prop.curse = "-" end
-        if not prop.nerve then prop.nerve = "-" end
-        if not prop.hiero then prop.hiero = "-" end
+        prop.onehand = prop.onehand or "-"
+        prop.twohand = prop.twohand or "-"
+        prop.spear = prop.spear or "-"
+        prop.axe = prop.axe or "-"
+        prop.whip = prop.whip or "-"
+        prop.thrown = prop.thrown or "-"
+        prop.arrow = prop.arrow or "-"
+        prop.fist = prop.fist or "-"
+        prop.handgun = prop.handgun or "-"
+        prop.machinegun = prop.machinegun or "-"
+        prop.shotgun = prop.shotgun or "-"
+        prop.rifle = prop.rifle or "-"
+        prop.tech = prop.tech or "-"
+        prop.rush = prop.rush or "-"
+        prop.fire = prop.fire or "-"
+        prop.ice = prop.ice or "-"
+        prop.wind = prop.wind or "-"
+        prop.earth = prop.earth or "-"
+        prop.elec = prop.elec or "-"
+        prop.nuclear = prop.nuclear or "-"
+        prop.blast = prop.blast or "-"
+        prop.gravity = prop.gravity or "-"
+        prop.expel = prop.expel or "-"
+        prop.miracle = prop.miracle or "-"
+        prop.death = prop.death or "-"
+        prop.curse = prop.curse or "-"
+        prop.nerve = prop.nerve or "-"
+        prop.hiero = prop.hiero or "-"
         result = result .. styles.table2 .. '\n!style="background:#a9a9a9" title="Weapons" colspan="8"|\n!title="Firearms" style="background:#898989" colspan="4"|\n!style="background:#a9a9a9" title="Havoc" colspan="2"|\n|-' .. styles.h .. 'title="Weapons"|<abbr title="1-handed Sword">1h</abbr>' .. styles.h .. 'title="Weapons"|<abbr title="2-handed Sword">2h</abbr>' .. styles.h .. 'title="Weapons"|<abbr title="Spear">Sp</abbr>' .. styles.h .. 'title="Weapons"|<abbr title="Axe">Ax</abbr>' .. styles.h .. 'title="Weapons"|<abbr title="Whip">Wp</abbr>' .. styles.h .. 'title="Weapons"|<abbr title="Thrown">Th</abbr>' .. styles.h .. 'title="Weapons"|<abbr title="Arrows">Ar</abbr>' .. styles.h .. 'title="Weapons"|<abbr title="Fist">Fs</abbr>' .. styles.h .. 'title="Firearms" style="background:#898989;width:7.12%"|<abbr title="Handgun">HG</abbr>' .. styles.h .. 'title="Firearms" style="background:#898989;width:7.12%"|<abbr title="Machinegun">MG</abbr>' .. styles.h .. 'title="Firearms" style="background:#898989;width:7.12%"|<abbr title="Shotgun">SG</abbr>' .. styles.h .. 'title="Firearms" style="background:#898989;width:7.12%"|<abbr title="Rifle">Ri</abbr>' .. styles.h .. 'title="Havoc"|<abbr title="Tech">Te</abbr>' .. styles.h .. 'title="Havoc"|<abbr title="Rush">Ru</abbr>\n|-\n' .. styles.statlow .. prop.onehand .. styles.statlow .. prop.twohand .. styles.statlow .. prop.spear .. styles.statlow .. prop.axe .. styles.statlow .. prop.whip .. styles.statlow .. prop.thrown .. styles.statlow .. prop.arrow .. styles.statlow .. prop.fist .. styles.statlow .. prop.handgun .. styles.statlow .. prop.machinegun .. styles.statlow .. prop.shotgun .. styles.statlow .. prop.rifle .. styles.statlow .. prop.tech .. styles.statlow .. prop.rush
         result = result .. '\n|-\n!style="background:#a9a9a9" title="Element" colspan="4"|\n!style="background:#898989" title="Force" colspan="4"|\n!style="background:#a9a9a9" title="Light" colspan="2"|\n!style="background:#898989" title="Dark" colspan="3"|\n!style="background:#a9a9a9" title="Special" colspan="1"|\n|-' .. styles.h .. 'width="7.12%" title="Element"|<abbr title="Fire">Fi</abbr>' .. styles.h .. 'width="7.12%" title="Element"|<abbr title="Ice">Ic</abbr>' .. styles.h .. 'width="7.12%" title="Element"|<abbr title="Wind">Wi</abbr>' .. styles.h .. 'width="7.12%" title="Element"|<abbr title="Earth">Er</abbr>' .. styles.h .. 'style="background:#898989;width:7.12%" title="Force"|<abbr title="Electricity">El</abbr>' .. styles.h .. 'style="background:#898989;width:7.12%" title="Force"|<abbr title="Nuclear">Nc</abbr>' .. styles.h .. 'style="background:#898989;width:7.12%" title="Force"|<abbr title="Blast">Bl</abbr>' .. styles.h .. 'style="background:#898989;width:7.12%" title="Force"|<abbr title="Gravity">Gr</abbr>' .. styles.h .. 'title="Light"|<abbr title="Expel">Ex</abbr>' .. styles.h .. 'title="Light"|<abbr title="Miracle">Mi</abbr>' .. styles.h .. 'style="background:#898989" title="Dark"|<abbr title="Death">De</abbr>' .. styles.h .. 'style="background:#898989" title="Dark"|<abbr title="Curse">Cu</abbr>' .. styles.h .. 'style="background:#898989;width:7.12%" title="Dark (Ailments)"|<abbr title="Nerve">Nr</abbr>' .. styles.h .. 'width="7.12%" title="Special"|<abbr title="Resistance to Hieroglyphein">???</abbr>\n|-\n' .. styles.statlow .. prop.fire .. styles.statlow .. prop.ice .. styles.statlow .. prop.wind .. styles.statlow .. prop.earth .. styles.statlow .. prop.elec .. styles.statlow .. prop.nuclear .. styles.statlow .. prop.blast .. styles.statlow .. prop.gravity .. styles.statlow .. prop.expel .. styles.statlow .. prop.miracle .. styles.statlow .. prop.death .. styles.statlow .. prop.curse .. styles.statlow .. prop.nerve .. styles.statlow .. prop.hiero .. "\n|}"
     end
@@ -271,10 +271,10 @@ function p.renderPost(ctx, result)
     end
     if (gameg == "smt3" or gameg == "smtds" or gameg == "sh" or gameg == "p2is" or gameg == "p2ep" or gameg == "pq" or gameg == "pq2" or gameg == "ddsaga1" or gameg == "ddsaga2") and (prop.resist or prop.block or prop.absorb or prop.reflect or prop.weak or prop.boost or prop.wild) then
         result = result .. styles.table2
-        if not prop.resist then prop.resist = "-" end
-        if not prop.block then prop.block = "-" end
-        if not prop.absorb then prop.absorb = "-" end
-        if not prop.reflect then prop.reflect = "-" end
+        prop.resist = prop.resist or "-"
+        prop.block = prop.block or "-"
+        prop.absorb = prop.absorb or "-"
+        prop.reflect = prop.reflect or "-"
         if not prop.weak then
             prop.weak = "-"
         else
@@ -288,23 +288,23 @@ function p.renderPost(ctx, result)
     end
     if (gameg == "p2is" or gameg == "p2ep") and (prop.sword or prop.pierce or prop.strike or prop.thrown or prop.rush or prop.fire or prop.water or prop.wind or prop.earth or prop.ice or prop.elec or prop.nuclear or prop.expel or prop.dark or prop.alm or prop.nerve or prop.mind) then
         result = result .. styles.table2
-        if not prop.sword then prop.sword = "-" end
-        if not prop.pierce then prop.pierce = "-" end
-        if not prop.strike then prop.strike = "-" end
-        if not prop.thrown then prop.thrown = "-" end
-        if not prop.rush then prop.rush = "-" end
-        if not prop.fire then prop.fire = "-" end
-        if not prop.water then prop.water = "-" end
-        if not prop.wind then prop.wind = "-" end
-        if not prop.earth then prop.earth = "-" end
-        if not prop.ice then prop.ice = "-" end
-        if not prop.elec then prop.elec = "-" end
-        if not prop.nuclear then prop.nuclear = "-" end
-        if not prop.expel then prop.expel = "-" end
-        if not prop.dark then prop.dark = "-" end
-        if not prop.alm then prop.alm = "-" end
-        if not prop.nerve then prop.nerve = "-" end
-        if not prop.mind then prop.mind = "-" end
+        prop.sword = prop.sword or "-"
+        prop.pierce = prop.pierce or "-"
+        prop.strike = prop.strike or "-"
+        prop.thrown = prop.thrown or "-"
+        prop.rush = prop.rush or "-"
+        prop.fire = prop.fire or "-"
+        prop.water = prop.water or "-"
+        prop.wind = prop.wind or "-"
+        prop.earth = prop.earth or "-"
+        prop.ice = prop.ice or "-"
+        prop.elec = prop.elec or "-"
+        prop.nuclear = prop.nuclear or "-"
+        prop.expel = prop.expel or "-"
+        prop.dark = prop.dark or "-"
+        prop.alm = prop.alm or "-"
+        prop.nerve = prop.nerve or "-"
+        prop.mind = prop.mind or "-"
         if prop.etype == "Fire" then
             prop.Fi = '<span style="color:#8B668B">Fi</span>'
         else
@@ -341,29 +341,29 @@ function p.renderPost(ctx, result)
     end
     if gameg == "pq" or gameg == "pq2" and (prop.sword or prop.pierce or prop.strike or prop.phys or prop.fire or prop.water or prop.elec or prop.wind or prop.nuclear or prop.psy or prop.expel or prop.dark or prop.alm or prop.ko or prop.sleep or prop.panic or prop.poison or prop.paralyze or prop.down or prop.stbind or prop.mabind or prop.agbind) then
         result = result .. styles.table2
-        if not prop.sword then prop.sword = "-" end
-        if not prop.pierce then prop.pierce = "-" end
-        if not prop.strike then prop.strike = "-" end
-        if not prop.phys then prop.phys = "-" end
-        if not prop.fire then prop.fire = "-" end
-        if not prop.ice then prop.ice = "-" end
-        if not prop.elec then prop.elec = "-" end
-        if not prop.wind then prop.wind = "-" end
-        if not prop.nuclear then prop.nuclear = "-" end
-        if not prop.psy then prop.psy = "-" end
-        if not prop.expel then prop.expel = "-" end
-        if not prop.dark then prop.dark = "-" end
-        if not prop.alm then prop.alm = "-" end
-        if not prop.sleep then prop.sleep = "-" end
-        if not prop.panic then prop.panic = "-" end
-        if not prop.poison then prop.poison = "-" end
-        if not prop.curse then prop.curse = "-" end
-        if not prop.paralyze then prop.paralyze = "-" end
-        if not prop.stbind then prop.stbind = "-" end
-        if not prop.mabind then prop.mabind = "-" end
-        if not prop.agbind then prop.agbind = "-" end
-        if not prop.down then prop.down = "-" end
-        if not prop.ko then prop.ko = "-" end
+        prop.sword = prop.sword or "-"
+        prop.pierce = prop.pierce or "-"
+        prop.strike = prop.strike or "-"
+        prop.phys = prop.phys or "-"
+        prop.fire = prop.fire or "-"
+        prop.ice = prop.ice or "-"
+        prop.elec = prop.elec or "-"
+        prop.wind = prop.wind or "-"
+        prop.nuclear = prop.nuclear or "-"
+        prop.psy = prop.psy or "-"
+        prop.expel = prop.expel or "-"
+        prop.dark = prop.dark or "-"
+        prop.alm = prop.alm or "-"
+        prop.sleep = prop.sleep or "-"
+        prop.panic = prop.panic or "-"
+        prop.poison = prop.poison or "-"
+        prop.curse = prop.curse or "-"
+        prop.paralyze = prop.paralyze or "-"
+        prop.stbind = prop.stbind or "-"
+        prop.mabind = prop.mabind or "-"
+        prop.agbind = prop.agbind or "-"
+        prop.down = prop.down or "-"
+        prop.ko = prop.ko or "-"
         if not (prop.arcana and (prop.hp or prop.mp)) then
             if gameg == "pq" then
                 result = result .. styles.h .. "width=10%|Cut" .. styles.h .. "width=10%|Stab" .. styles.h .. "width=10%|Bash" .. styles.h .. "width=10%|Fire" .. styles.h .. "width=10%|Ice" .. styles.h .. 'width=10% title="Electricity"|Elec' .. styles.h .. "width=10%|Wind" .. styles.h .. "width=10%|Light" .. styles.h .. "width=10%|Dark" .. styles.h .. 'width=10% title="Almighty"|Alm\n|-\n' .. styles.statlow .. prop.sword .. styles.statlow .. prop.pierce .. styles.statlow .. prop.strike .. styles.statlow .. prop.fire .. styles.statlow .. prop.ice .. styles.statlow .. prop.elec .. styles.statlow .. prop.wind .. styles.statlow .. prop.expel .. styles.statlow .. prop.dark .. styles.statlow .. prop.alm .. "\n|}"
