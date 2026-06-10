@@ -121,8 +121,8 @@ function p.render(ctx)
         return appendTopAffinityTable(ctx, result, affinity_table)
     end
     local styles = Style.new(gameData)
-    local result = '{|align="center" style="min-width:650px;text-align:center; background: #222; border:2px solid ' .. gameData.colorb .. '; border-radius:10px; font-size:75%; font-family:verdana;"\n|-\n|' .. styles.table2b
-    if gameg == "sh2" then result = '{|align="center" style="min-width:650px;text-align:center; background: #222; border:2px solid ' .. gameData.colorbg .. '; border-radius:10px; font-size:75%; font-family:verdana;"\n|-\n|' .. styles.table2b end
+    local root_border = gameg == "sh2" and gameData.colorbg or gameData.colorb
+    local result = '{|align="center" style="min-width:650px;text-align:center; background: #222; border:2px solid ' .. root_border .. '; border-radius:10px; font-size:75%; font-family:verdana;"\n|-\n|' .. styles.table2b
     if prop.image then
         result = result .. '\n!style="width:20px;border:#333 solid 2px;border-radius:7px;background:'
         if game == "smt1" then
@@ -249,8 +249,8 @@ function p.render(ctx)
     result = Drops.renderLegacyRewards(ctx, result)
     result = Affinity.renderSmtIfLegacy(ctx, result)
     if game == "smtim" then
-        if not prop.seealso then prop.seealso = mw.title.getCurrentTitle().text end
-        result = result .. styles.table2 .. styles.h .. "width=50px|Features" .. styles.order .. prop.feature .. styles.h .. "width=60px|See also" .. styles.order .. "[https://web.archive.org/web/megaten.sesshou.com/wiki/index.php/" .. string.gsub(prop.seealso, " ", "_") .. "]\n|}"
+        local seealso = prop.seealso or mw.title.getCurrentTitle().text
+        result = result .. styles.table2 .. styles.h .. "width=50px|Features" .. styles.order .. prop.feature .. styles.h .. "width=60px|See also" .. styles.order .. "[https://web.archive.org/web/megaten.sesshou.com/wiki/index.php/" .. string.gsub(seealso, " ", "_") .. "]\n|}"
     end
     result = Affinity.renderPost(ctx, result)
     result = Drops.renderPersona2Summon(ctx, result)
