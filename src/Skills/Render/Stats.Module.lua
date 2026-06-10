@@ -681,6 +681,7 @@ function p.renderTop(ctx, result)
         end
         result = result .. "\n|}"
     elseif (render_game == "p3" or render_game == "p3re") or render_game == "p4" or (render_game == "p5" or render_game == "p5r" or render_game == "p5s" or render_game == "p5x") then
+        local isP5Family = gameg == "p5" or gameg == "p5r" or gameg == "p5s" or gameg == "p5x"
         local has_arcana = not ((gameg == "p5" or gameg == "p5r" or gameg == "p5x") and not hasFilledValue(prop.arcana))
         local str = prop.str
         local magic = prop.magic
@@ -711,11 +712,13 @@ function p.renderTop(ctx, result)
         if has_arcana then
             stat_table = stat_table .. styles.statlow .. getArcana(prop.arcana, gameg, gamegn)
         end
+        local hp_border = (prop.hp or prop.maxhp) and '<div style="position:relative;top:-4px;border:2.5px solid ' .. gameData.hp2 .. '"></div>' or nil
+        local mp_border = (prop.mp or prop.maxmp) and '<div style="position:relative;top:-4px;border:2.5px solid ' .. gameData.mp2 .. '"></div>' or nil
         stat_table = stat_table .. styles.statlow .. prop.level
-        if prop.hp then stat_table = stat_table .. styles.statlow .. prop.hp .. '<div style="position:relative;top:-4px;border:2.5px solid ' .. gameData.hp2 .. '"></div>' end
-        if prop.mp then stat_table = stat_table .. styles.statlow .. prop.mp .. '<div style="position:relative;top:-4px;border:2.5px solid ' .. gameData.mp2 .. '"></div>' end
-        if prop.maxhp then stat_table = stat_table .. styles.statlow .. prop.maxhp .. '<div style="position:relative;top:-4px;border:2.5px solid ' .. gameData.hp2 .. '"></div>' end
-        if prop.maxmp then stat_table = stat_table .. styles.statlow .. prop.maxmp .. '<div style="position:relative;top:-4px;border:2.5px solid ' .. gameData.mp2 .. '"></div>' end
+        if prop.hp then stat_table = stat_table .. styles.statlow .. prop.hp .. hp_border end
+        if prop.mp then stat_table = stat_table .. styles.statlow .. prop.mp .. mp_border end
+        if prop.maxhp then stat_table = stat_table .. styles.statlow .. prop.maxhp .. hp_border end
+        if prop.maxmp then stat_table = stat_table .. styles.statlow .. prop.maxmp .. mp_border end
         if gameg == "p5s" and prop.stagger then stat_table = stat_table .. styles.statlow .. prop.stagger end
         if prop.traits then stat_table = stat_table .. styles.statlow .. prop.traits end
         stat_table = stat_table .. "\n|}"
@@ -767,7 +770,7 @@ function p.renderTop(ctx, result)
                 end
             end
         end
-        if gameg == "p5" or gameg == "p5r" or gameg == "p5s" or gameg == "p5x" then
+        if isP5Family then
             if prop.hp then
                 if prop.boss then
                     stat_categories = stat_categories .. cate(gamen .. " Bosses")
@@ -796,11 +799,13 @@ function p.renderTop(ctx, result)
         if prop.maxmp then result = result .. styles.h .. 'width="40px"|MP' end
         result = result .. styles.bart11 .. "324px" .. styles.bart12 .. '0.8"' .. styles.barh .. "|Strength" .. styles.bard2 .. bar(styles.barc, prop.str, 2.4, 99) .. styles.barh .. "|Magic" .. styles.bard2 .. bar(styles.barc, prop.magic, 2.4, 99) .. styles.barh .. "|Endurance" .. styles.bard2 .. bar(styles.barc, prop.vit, 2.4, 99) .. styles.barh .. "|Agility" .. styles.bard2 .. bar(styles.barc, prop.agl, 2.4, 99) .. styles.barh .. "|Luck" .. styles.bard2 .. bar(styles.barc, prop.luc, 2.4, 99) .. "\n|}\n|-"
         if not prop.hp then result = result .. styles.statlow .. "[[" .. prop.archetype .. " (Archetype)|" .. prop.archetype .. "]]" end
+        local hp_border = (prop.hp or prop.maxhp) and '<div style="position:relative;top:-4px;border:2.5px solid ' .. gameData.hp2 .. '"></div>' or nil
+        local mp_border = (prop.mp or prop.maxmp) and '<div style="position:relative;top:-4px;border:2.5px solid ' .. gameData.mp2 .. '"></div>' or nil
         result = result .. styles.statlow .. prop.level
-        if prop.hp then result = result .. styles.statlow .. prop.hp .. '<div style="position:relative;top:-4px;border:2.5px solid ' .. gameData.hp2 .. '"></div>' end
-        if prop.mp then result = result .. styles.statlow .. prop.mp .. '<div style="position:relative;top:-4px;border:2.5px solid ' .. gameData.mp2 .. '"></div>' end
-        if prop.maxhp then result = result .. styles.statlow .. prop.maxhp .. '<div style="position:relative;top:-4px;border:2.5px solid ' .. gameData.hp2 .. '"></div>' end
-        if prop.maxmp then result = result .. styles.statlow .. prop.maxmp .. '<div style="position:relative;top:-4px;border:2.5px solid ' .. gameData.mp2 .. '"></div>' end
+        if prop.hp then result = result .. styles.statlow .. prop.hp .. hp_border end
+        if prop.mp then result = result .. styles.statlow .. prop.mp .. mp_border end
+        if prop.maxhp then result = result .. styles.statlow .. prop.maxhp .. hp_border end
+        if prop.maxmp then result = result .. styles.statlow .. prop.maxmp .. mp_border end
         result = result .. "\n|}"
         if prop.hp then
             if prop.boss then
