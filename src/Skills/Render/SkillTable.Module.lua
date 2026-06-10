@@ -794,17 +794,18 @@ local function renderPersona3FusionRows(ctx, result)
     local gamed = ctx.gamed
     local noskill = ctx.noskill
     local cost, effect, fskillCell, pre
+    local fusionSkill = data.skills[prop.fskills]
 
-    if not data.skills[prop.fskills] then
+    if not fusionSkill then
         cost = ""
         effect = noskill(prop.fskills, gamed)
         fskillCell = prop.fskills
         pre = ""
     else
-        cost = styles.cost1 .. data.skills[prop.fskills].cost
-        effect = styles.effect1 .. data.skills[prop.fskills].effect
+        cost = styles.cost1 .. fusionSkill.cost
+        effect = styles.effect1 .. fusionSkill.effect
         fskillCell = styles.skill .. prop.fskills
-        pre = styles.cost1 .. data.skills[prop.fskills].pre
+        pre = styles.cost1 .. fusionSkill.pre
     end
     return result .. "|[[List of Persona 3 Skills#Fusion Spells|" .. styles.spanc .. 'Fusion Spell</span>]] <abbr title="Persona 3, FES and Reload only; Portable uses items and does not require the participating Personas to be in stock">*</abbr>' .. styles.skill .. "Skill" .. styles.skillc .. "Cost" .. styles.skillc .. "Effect" .. styles.skillc .. '<abbr title="Persona 3, FES and Reload only">Prerequisite</abbr>' .. fskillCell .. cost .. effect .. pre
 end
