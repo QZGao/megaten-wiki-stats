@@ -146,26 +146,30 @@ end
 -- Handles Smirk, chain effects, conditional effects, and boost-level descriptions.
 local function formatExpandedSkillEffect(skill, gameData)
     local effect = skill.effect
+    local boldBadgeStart
 
     if skill.smirk then effect = effect .. ' <span style="background:' .. gameData.statb .. ';border-radius:5px;padding:3px">Smirk</span> ' .. skill.smirk end
+    if skill.chaineffect or skill.conditional or skill.boostlevel then
+        boldBadgeStart = '<span style="background:' .. gameData.colorb .. ';border-radius:5px;padding:3px;font-weight:bold;">'
+    end
     if skill.chaineffect then
         for _, child in ipairs(skill.chaineffect) do
-            effect = effect .. string.format('\n<span style="background:' .. gameData.colorb .. ';border-radius:5px;padding:3px;font-weight:bold;">%s:</span>', child[1]) .. " " .. child[2] .. "\n"
+            effect = effect .. "\n" .. boldBadgeStart .. child[1] .. ":</span> " .. child[2] .. "\n"
         end
     end
     if skill.conditional then
         for _, child in ipairs(skill.conditional) do
-            effect = effect .. string.format('\n<span style="background:' .. gameData.colorb .. ';border-radius:5px;padding:3px;font-weight:bold;">%s:</span>', child[1]) .. " " .. child[2] .. "\n"
+            effect = effect .. "\n" .. boldBadgeStart .. child[1] .. ":</span> " .. child[2] .. "\n"
             if child.chaineffect then
                 for _, value in ipairs(child.chaineffect) do
-                    effect = effect .. string.format('<br><span style="background:' .. gameData.colorb .. ';border-radius:5px;padding:3px;font-weight:bold;">%s:</span>', value[1]) .. " " .. value[2] .. "\n"
+                    effect = effect .. "<br>" .. boldBadgeStart .. value[1] .. ":</span> " .. value[2] .. "\n"
                 end
             end
         end
     end
     if skill.boostlevel then
         for level, value in ipairs(skill.boostlevel) do
-            if string.len(value) > 0 then effect = effect .. string.format('<br><span style="background:' .. gameData.colorb .. ';border-radius:5px;padding:3px;font-weight:bold;">Level %d:</span>', level - 1) .. " " .. value end
+            if string.len(value) > 0 then effect = effect .. "<br>" .. boldBadgeStart .. "Level " .. (level - 1) .. ":</span> " .. value end
         end
     end
 
