@@ -31,6 +31,31 @@ local function splitSpecialtyPair(text)
     return string.sub(text, 1, firstSlash - 1), string.sub(text, firstSlash + 1, secondSlash - 1)
 end
 
+-- Iterate newline-separated specialty parameters without allocating a split table.
+-- Used by SMT4 skill affinities and SMT5 skill potential; preserves trailing empty lines.
+local function eachLine(text)
+    local index = 0
+    local position = 1
+    local done = false
+
+    return function()
+        if done then
+            return nil
+        end
+
+        index = index + 1
+        local newline = string.find(text, "\n", position, true)
+        if newline then
+            local line = string.sub(text, position, newline - 1)
+            position = newline + 1
+            return index, line, true
+        end
+
+        done = true
+        return index, string.sub(text, position), false
+    end
+end
+
 -- Render top stat/header sections inside the image-span table.
 -- Covers main stat layouts for MT/KMT/SMT, Persona, Devil Summoner, Devil Survivor, Last Bible, DemiKids, DDS, PQ, Metaphor, and related games.
 function p.renderTop(ctx, result)
@@ -238,8 +263,7 @@ function p.renderTop(ctx, result)
         end
         if prop.specialty then
             result = result .. styles.table2 .. styles.h .. 'width=100px|[[Skill Affinities|<span style="color:#000">Skill Affinities</span>]]' .. styles.order
-            prop.specialty = mw.text.split(prop.specialty, "\n")
-            for k1, v1 in ipairs(prop.specialty) do
+            for k1, v1, hasNext in eachLine(prop.specialty) do
                 local skilltype, modifier = splitSpecialtyPair(v1)
                 result = result .. '<span style="white-space:nowrap">' .. smt4_skilltypes[skilltype:lower()]
                 if string.sub(modifier, 1, 1) == "+" then
@@ -247,7 +271,7 @@ function p.renderTop(ctx, result)
                 else
                     result = result .. ' <span style="color:#f55">' .. modifier .. "</span></span>"
                 end
-                if next(prop.specialty, k1) then -- add dot separator if it's not the last entry
+                if hasNext then -- add dot separator if it's not the last entry
                     result = result .. " · "
                     if k1 == 6 then result = result .. "<br/>" end
                 end
@@ -294,9 +318,7 @@ function p.renderTop(ctx, result)
         end
         if prop.specialty then
             styles.h = '\n!style="background:' .. gameData.colorbg2 .. ';color:#fff" '
-            result = result .. styles.table2h .. '"' .. styles.h .. "colspan=4|[[Skill Affinities|" .. styles.spanc .. "Skill Potential</span>]]"
-            prop.specialty = mw.text.split(prop.specialty, "\n")
-            prop.skilltypes = {
+            local skilltypes = {
                 ["phys"] = "-",
                 ["fire"] = "-",
                 ["ice"] = "-",
@@ -309,18 +331,19 @@ function p.renderTop(ctx, result)
                 ["heal"] = "-",
                 ["support"] = "-",
             }
+            result = result .. styles.table2h .. '"' .. styles.h .. "colspan=4|[[Skill Affinities|" .. styles.spanc .. "Skill Potential</span>]]"
             local restemp
-            for k1, v1 in ipairs(prop.specialty) do
+            for _, v1 in eachLine(prop.specialty) do
                 local modifier
                 restemp, modifier = splitSpecialtyPair(v1)
                 restemp = restemp:lower()
                 if string.sub(modifier, 1, 1) == "+" then
-                    prop.skilltypes[restemp] = ' <span style="color:#5f5">' .. modifier .. "</span></span>"
+                    skilltypes[restemp] = ' <span style="color:#5f5">' .. modifier .. "</span></span>"
                 else
-                    prop.skilltypes[restemp] = ' <span style="color:#f55">' .. modifier .. "</span></span>"
+                    skilltypes[restemp] = ' <span style="color:#f55">' .. modifier .. "</span></span>"
                 end
             end
-            result = result .. styles.table2 .. styles.cost3 .. 'width=10% title="Physical"|[[File:PhysIcon_SMTV.png|24px|alt=Physical|Physical|link=Physical Skills]]<br>[[Physical Skills|<span style="color:white">Phys</span>]]' .. styles.cost3 .. 'width=9% title="Fire"|[[File:FireIcon_SMTV.png|24px|alt=Fire|Fire|link=Fire Skills]]<br>[[Fire Skills|<span style="color:white">Fire</span>]]' .. styles.cost3 .. 'width=9% title="Ice"|[[File:IceIcon_SMTV.png|24px|alt=Ice|Ice|link=Ice Skills]] <br>[[Ice Skills|<span style="color:white">Ice</span>]]' .. styles.cost3 .. 'width=9% title="Electricity"|[[File:ElecIcon_SMTV.png|24px|alt=Electricity|Electricity|link=Electric Skills]]<br>[[Electric Skills|<span style="color:white">Elec</span>]]' .. styles.cost3 .. 'width=9% title="Force"|[[File:ForceIcon_SMTV.png|24px|alt=Force|Force|link=Force Skills]]<br>[[Force Skills|<span style="color:white">Force</span>]]' .. styles.cost3 .. 'width=9% title="Light"|[[File:LightIcon_SMTV.png|24px|alt=Light|Light|link=Light Skills (Affinity)]]<br>[[Light Skills (Affinity)|<span style="color:white">Light</span>]]' .. styles.cost3 .. 'width=9% title="Dark"|[[File:DarkIcon_SMTV.png|24px|alt=Dark|Dark|link=Dark Skills (Affinity)]]<br>[[Dark Skills (Affinity)|<span style="color:white">Dark</span>]]' .. styles.cost3 .. 'width=9% title="Almighty"|[[File:AlmightyIcon_SMTV.png|24px|alt=Almighty|Almighty|link=Almighty Skills]]<br>[[Almighty Skills|<span style="color:white">Almi.</span>]]' .. styles.cost3 .. 'width=9% title="Ailment"|[[File:AilmentIcon_SMTV.png|24px|alt=Ailment|Ailment|link=Ailment Skills]]<br>[[Ailment Skills|<span style="color:white">Ailm.</span>]]' .. styles.cost3 .. 'width=9% title="Healing"|[[File:HealIcon_SMTV.png|24px|alt=Healing|Healing|link=Healing Skills]]<br>[[Healing Skills|<span style="color:white">Heal.</span>]]' .. styles.cost3 .. 'width=9% title="Support"|[[File:SupportIcon_SMTV.png|24px|alt=Support|Support|link=Support Skills]]<br>[[Support Skills|<span style="color:white">Supp.</span>]]\n|-\n' .. styles.cost3 .. "width=9%|" .. prop.skilltypes["phys"] .. styles.cost3 .. "width=9%|" .. prop.skilltypes["fire"] .. styles.cost3 .. "width=9%|" .. prop.skilltypes["ice"] .. styles.cost3 .. "width=9%|" .. prop.skilltypes["elec"] .. styles.cost3 .. "width=9%|" .. prop.skilltypes["force"] .. styles.cost3 .. "width=9%|" .. prop.skilltypes["light"] .. styles.cost3 .. "width=9%|" .. prop.skilltypes["dark"] .. styles.cost3 .. "width=9%|" .. prop.skilltypes["almighty"] .. styles.cost3 .. "width=9%|" .. prop.skilltypes["ailment"] .. styles.cost3 .. "width=9%|" .. prop.skilltypes["heal"] .. styles.cost3 .. "width=9%|" .. prop.skilltypes["support"] .. "\n|}" .. "\n|}"
+            result = result .. styles.table2 .. styles.cost3 .. 'width=10% title="Physical"|[[File:PhysIcon_SMTV.png|24px|alt=Physical|Physical|link=Physical Skills]]<br>[[Physical Skills|<span style="color:white">Phys</span>]]' .. styles.cost3 .. 'width=9% title="Fire"|[[File:FireIcon_SMTV.png|24px|alt=Fire|Fire|link=Fire Skills]]<br>[[Fire Skills|<span style="color:white">Fire</span>]]' .. styles.cost3 .. 'width=9% title="Ice"|[[File:IceIcon_SMTV.png|24px|alt=Ice|Ice|link=Ice Skills]] <br>[[Ice Skills|<span style="color:white">Ice</span>]]' .. styles.cost3 .. 'width=9% title="Electricity"|[[File:ElecIcon_SMTV.png|24px|alt=Electricity|Electricity|link=Electric Skills]]<br>[[Electric Skills|<span style="color:white">Elec</span>]]' .. styles.cost3 .. 'width=9% title="Force"|[[File:ForceIcon_SMTV.png|24px|alt=Force|Force|link=Force Skills]]<br>[[Force Skills|<span style="color:white">Force</span>]]' .. styles.cost3 .. 'width=9% title="Light"|[[File:LightIcon_SMTV.png|24px|alt=Light|Light|link=Light Skills (Affinity)]]<br>[[Light Skills (Affinity)|<span style="color:white">Light</span>]]' .. styles.cost3 .. 'width=9% title="Dark"|[[File:DarkIcon_SMTV.png|24px|alt=Dark|Dark|link=Dark Skills (Affinity)]]<br>[[Dark Skills (Affinity)|<span style="color:white">Dark</span>]]' .. styles.cost3 .. 'width=9% title="Almighty"|[[File:AlmightyIcon_SMTV.png|24px|alt=Almighty|Almighty|link=Almighty Skills]]<br>[[Almighty Skills|<span style="color:white">Almi.</span>]]' .. styles.cost3 .. 'width=9% title="Ailment"|[[File:AilmentIcon_SMTV.png|24px|alt=Ailment|Ailment|link=Ailment Skills]]<br>[[Ailment Skills|<span style="color:white">Ailm.</span>]]' .. styles.cost3 .. 'width=9% title="Healing"|[[File:HealIcon_SMTV.png|24px|alt=Healing|Healing|link=Healing Skills]]<br>[[Healing Skills|<span style="color:white">Heal.</span>]]' .. styles.cost3 .. 'width=9% title="Support"|[[File:SupportIcon_SMTV.png|24px|alt=Support|Support|link=Support Skills]]<br>[[Support Skills|<span style="color:white">Supp.</span>]]\n|-\n' .. styles.cost3 .. "width=9%|" .. skilltypes["phys"] .. styles.cost3 .. "width=9%|" .. skilltypes["fire"] .. styles.cost3 .. "width=9%|" .. skilltypes["ice"] .. styles.cost3 .. "width=9%|" .. skilltypes["elec"] .. styles.cost3 .. "width=9%|" .. skilltypes["force"] .. styles.cost3 .. "width=9%|" .. skilltypes["light"] .. styles.cost3 .. "width=9%|" .. skilltypes["dark"] .. styles.cost3 .. "width=9%|" .. skilltypes["almighty"] .. styles.cost3 .. "width=9%|" .. skilltypes["ailment"] .. styles.cost3 .. "width=9%|" .. skilltypes["heal"] .. styles.cost3 .. "width=9%|" .. skilltypes["support"] .. "\n|}" .. "\n|}"
         end
     elseif render_game == "ldx2" then
         if not prop.hp then prop.hp = "?" end
