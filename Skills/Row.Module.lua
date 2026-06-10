@@ -30,6 +30,135 @@ local function resolveSkill(data, code)
     return code, nil
 end
 
+-- Normalize the displayed cost for one #invoke:row skill.
+-- Used by all row handlers; SMT3 conversation rows and Interrupt skills have special display text.
+local function getRowCost(game, skill)
+    if game == "SMT3" then
+        return '<abbr title="Active conversational skill without HP or MP cost. Ineffective to Corpus, Haunt, Wilder, Foul, Light-tendency demons, bosses and all enemies in Labyrinth of Amala.">Convo</abbr>'
+    elseif skill.cost == "Interrupt" then
+        return '<abbr title="Interruption skill is only triggered when certain conversational effect occurs.">Interrupt</abbr>'
+    end
+
+    return skill.cost
+end
+
+-- Build the odd-row level cell for #invoke:row formats with learned levels.
+-- Used by generic r21/r31 and DemiKids combo rows; skill.pre overrides the supplied level for every game.
+local function levelCell1(skill, level)
+    if skill.pre then
+        return "\n||" .. skill.pre
+    elseif level == "" then
+        return "\n||"
+    end
+
+    return "\n||" .. level
+end
+
+-- Build the even-row level cell for #invoke:row formats with learned levels.
+-- Used by generic r22/r32 and DemiKids combo rows; skill.pre overrides the supplied level for every game.
+local function levelCell2(skill, level)
+    if skill.pre then
+        return styles.cost2 .. skill.pre
+    elseif level == "" then
+        return styles.cost2
+    end
+
+    return styles.cost2 .. level
+end
+
+-- Dispatch legacy #invoke:row row codes to their exact renderer.
+-- Covers generic skill rows, Persona 1/2 persona rows, Persona fusion rows, SMT3 physical-cost exceptions, and DemiKids rows.
+local rowHandlers = {
+    -- Odd enemy row where skill cost is irrelevant; used by generic enemy skill lists.
+    r01 = function(skillcell, skill)
+        return skillcell .. styles.effect1 .. skill.effect
+    end,
+
+    -- Even enemy row where skill cost is irrelevant; used by generic enemy skill lists.
+    r02 = function(skillcell, skill)
+        return skillcell .. styles.effect2 .. skill.effect
+    end,
+
+    -- Odd demon row without learned-level output; SMT3 physical skills omit HP cost.
+    r11 = function(skillcell, skill, code, level, game)
+        if game == "SMT3" and skill.phy then
+            return skillcell .. styles.effect1p .. skill.effect
+        end
+        local cost = getRowCost(game, skill)
+        return skillcell .. "\n||" .. cost .. styles.effect1 .. skill.effect
+    end,
+
+    -- Even demon row without learned-level output; SMT3 physical skills omit HP cost.
+    r12 = function(skillcell, skill, code, level, game)
+        if game == "SMT3" and skill.phy then
+            return skillcell .. styles.effect2p .. skill.effect
+        end
+        local cost = getRowCost(game, skill)
+        return skillcell .. styles.cost2 .. cost .. styles.effect2 .. skill.effect
+    end,
+
+    -- Odd demon/persona row with learned-level output.
+    r21 = function(skillcell, skill, code, level, game)
+        local cost = getRowCost(game, skill)
+        return skillcell .. "\n||" .. cost .. styles.effect1 .. skill.effect .. levelCell1(skill, level)
+    end,
+
+    -- Even demon/persona row with learned-level output.
+    r22 = function(skillcell, skill, code, level, game)
+        local cost = getRowCost(game, skill)
+        return skillcell .. styles.cost2 .. cost .. styles.effect2 .. skill.effect .. levelCell2(skill, level)
+    end,
+
+    -- Odd guest row with learned-level output and no cost column.
+    r31 = function(skillcell, skill, code, level)
+        return skillcell .. styles.effect1 .. skill.effect .. levelCell1(skill, level)
+    end,
+
+    -- Even guest row with learned-level output and no cost column.
+    r32 = function(skillcell, skill, code, level)
+        return skillcell .. styles.effect2 .. skill.effect .. levelCell2(skill, level)
+    end,
+
+    -- Persona 1/2 persona row, where level is rendered before the skill name.
+    p12 = function(skillcell, skill, code, level)
+        return styles.skill .. level .. styles.skillc .. code .. styles.effect1 .. skill.effect
+    end,
+
+    -- Persona-specific fusion spell row.
+    rf = function(skillcell, skill)
+        return skillcell .. styles.effect1 .. skill.effect .. styles.order .. skill.cost
+    end,
+
+    -- Odd DemiKids stats skill row with element and cost.
+    dk1 = function(skillcell, skill, code, level, game)
+        local cost = getRowCost(game, skill)
+        return skillcell .. "\n||" .. skill.element .. "\n||" .. cost .. styles.effect1 .. skill.effect
+    end,
+
+    -- Even DemiKids stats skill row with element and cost.
+    dk2 = function(skillcell, skill, code, level, game)
+        local cost = getRowCost(game, skill)
+        return skillcell .. styles.cost2 .. skill.element .. styles.cost2 .. cost .. styles.effect2 .. skill.effect
+    end,
+
+    -- Odd DemiKids combo skill row with learned-level, element, and cost.
+    dkc1 = function(skillcell, skill, code, level, game)
+        local cost = getRowCost(game, skill)
+        return skillcell .. levelCell1(skill, level) .. "\n||" .. skill.element .. "\n||" .. cost .. styles.effect1 .. skill.effect
+    end,
+
+    -- Even DemiKids combo skill row with learned-level, element, and cost.
+    dkc2 = function(skillcell, skill, code, level, game)
+        local cost = getRowCost(game, skill)
+        return skillcell .. levelCell2(skill, level) .. styles.cost2 .. skill.element .. styles.cost2 .. cost .. styles.effect2 .. skill.effect
+    end,
+
+    -- DemiKids power row with element and no cost column.
+    dkp = function(skillcell, skill)
+        return skillcell .. styles.cost2 .. skill.element .. styles.effect2 .. skill.effect
+    end,
+}
+
 -- Render one legacy #invoke:row output fragment.
 -- Covers generic r01-r32 rows, Persona 1/2 persona rows, fusion rows, SMT3 physical-cost exceptions, and DemiKids rows.
 function p.render(args, noskill, cate)
@@ -48,72 +177,10 @@ function p.render(args, noskill, cate)
 
     if skill.name then code = skill.name end
     local skillcell = styles.skill .. code
-    local cost = skill.cost
-    if game == "SMT3" then
-        cost = '<abbr title="Active conversational skill without HP or MP cost. Ineffective to Corpus, Haunt, Wilder, Foul, Light-tendency demons, bosses and all enemies in Labyrinth of Amala.">Convo</abbr>'
-    elseif skill.cost == "Interrupt" then
-        cost = '<abbr title="Interruption skill is only triggered when certain conversational effect occurs.">Interrupt</abbr>'
-    end
 
-    local cost1 = "\n||" .. cost
-    local cost2 = styles.cost2 .. cost
-    local effect1 = styles.effect1 .. skill.effect
-    local effect2 = styles.effect2 .. skill.effect
-    local order = styles.order .. skill.cost
-    local element1, element2
-    if skill.element then
-        element1 = "\n||" .. skill.element or ""
-        element2 = styles.cost2 .. skill.element or ""
-    end
-
-    local level1, level2
-    if skill.pre then
-        level1 = "\n||" .. skill.pre
-        level2 = styles.cost2 .. skill.pre
-    elseif level == "" then
-        level1 = "\n||"
-        level2 = styles.cost2
-    elseif level then
-        level1 = "\n||" .. level
-        level2 = styles.cost2 .. level
-    end
-
-    if row == "r01" then
-        return skillcell .. effect1 -- Odd number row for enemy whose skill cost is irrelevant.
-    elseif row == "r02" then
-        return skillcell .. effect2 -- Even number row for enemy whose skill cost is irrelevant.
-    elseif row == "r11" then
-        if game == "SMT3" and skill.phy then
-            return skillcell .. styles.effect1p .. skill.effect -- Odd number row for enemy whose physical skills cost no HP.
-        end
-        return skillcell .. cost1 .. effect1 -- Odd number row for demon which does not learn new skill on level gain.
-    elseif row == "r12" then
-        if game == "SMT3" and skill.phy then
-            return skillcell .. styles.effect2p .. skill.effect -- Even number row for enemy whose physical skills cost no HP.
-        end
-        return skillcell .. cost2 .. effect2 -- Even number row for demon which does not learn new skill on level gain.
-    elseif row == "r21" then
-        return skillcell .. cost1 .. effect1 .. level1 -- Odd number row for demon/persona which learn new skill on level gain.
-    elseif row == "r22" then
-        return skillcell .. cost2 .. effect2 .. level2 -- Even number row for demon/persona which learn new skill on level gain.
-    elseif row == "r31" then
-        return skillcell .. effect1 .. level1 -- Odd number row for guest who learn new skill on level gain.
-    elseif row == "r32" then
-        return skillcell .. effect2 .. level2 -- Even number row for guest who learn new skill on level gain.
-    elseif row == "p12" then
-        return styles.skill .. level .. styles.skillc .. code .. effect1 -- Row for Persona 1 and 2 persona
-    elseif row == "rf" then
-        return skillcell .. effect1 .. order -- Row for Persona-specific fusion spell.
-    elseif row == "dk1" then
-        return skillcell .. element1 .. cost1 .. effect1 -- Odd number row for DemiKids stats skill list.
-    elseif row == "dk2" then
-        return skillcell .. element2 .. cost2 .. effect2 -- Odd number row for DemiKids stats skill list.
-    elseif row == "dkc1" then
-        return skillcell .. level1 .. element1 .. cost1 .. effect1 -- Odd number row for DemiKids stats combo skill list.
-    elseif row == "dkc2" then
-        return skillcell .. level2 .. element2 .. cost2 .. effect2 -- Odd number row for DemiKids stats combo skill list.
-    elseif row == "dkp" then
-        return skillcell .. element2 .. effect2 -- row for DemiKids powers.
+    local renderRow = rowHandlers[row]
+    if renderRow then
+        return renderRow(skillcell, skill, code, level, game)
     end
 
     return '<strong style="color:red;font-size:150%">Invalid parameter 1 of ' .. '"' .. row .. '".</strong>' .. cate("Templates with unrecognizable row value for Module:Skills")
