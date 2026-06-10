@@ -6,6 +6,26 @@ local Render = require("Module:Skills/Render")
 local p = {}
 local isArticleNamespace
 
+local property_names = require("Module:Property_names")
+local property_defaults = {}
+local property_alias_index = {}
+for key, names in pairs(property_names) do
+    property_defaults[key] = names.default
+
+    local seen_aliases = {}
+    for priority, name in ipairs(names) do
+        if not seen_aliases[name] then
+            local targets = property_alias_index[name]
+            if targets then
+                targets[#targets + 1] = { key = key, priority = priority }
+            else
+                property_alias_index[name] = { { key = key, priority = priority } }
+            end
+            seen_aliases[name] = true
+        end
+    end
+end
+
 -- Build a public #invoke wrapper that parses template arguments before calling an implementation.
 -- Used by the exported stats and row entry points for every supported game.
 local function makeInvokeFunction(funcName)
@@ -447,14 +467,26 @@ end
 -- Used by the main stats entry point before dispatching any game renderer.
 local function get_prop(args)
     local prop = {}
-    for k, v in pairs(require("Module:Property_names")) do
-        for _, name in ipairs(v) do
-            if args[name] then
-                prop[k] = args[name]
-                break
+    for key, default in pairs(property_defaults) do
+        prop[key] = default
+    end
+
+    local selected_priorities = {}
+    for name, value in pairs(args) do
+        if value then
+            local targets = property_alias_index[name]
+            if targets then
+                for i = 1, #targets do
+                    local target = targets[i]
+                    local key = target.key
+                    local selected_priority = selected_priorities[key]
+                    if not selected_priority or target.priority < selected_priority then
+                        prop[key] = value
+                        selected_priorities[key] = target.priority
+                    end
+                end
             end
         end
-        prop[k] = prop[k] or v.default
     end
     return prop
 end
