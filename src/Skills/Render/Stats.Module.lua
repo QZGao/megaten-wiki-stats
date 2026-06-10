@@ -962,3 +962,4 @@ function p.renderTop(ctx, result)
 end
 
 return p
+--[[Category:Skills modules|!]]

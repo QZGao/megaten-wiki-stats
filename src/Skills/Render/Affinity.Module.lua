@@ -496,3 +496,4 @@ function p.renderPost(ctx, result)
 end
 
 return p
+--[[Category:Skills modules|!]]

@@ -312,3 +312,4 @@ function p.render(ctx)
 end
 
 return p
+--[[Category:Skills modules|!]]

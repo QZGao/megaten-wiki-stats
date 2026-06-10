@@ -144,3 +144,4 @@ function p.renderFusionRewards(ctx, result)
 end
 
 return p
+--[[Category:Skills modules|!]]

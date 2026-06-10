@@ -187,3 +187,4 @@ function p.render(args, noskill, cate)
 end
 
 return p
+--[[Category:Skills modules|!]]

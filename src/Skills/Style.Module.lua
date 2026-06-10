@@ -60,3 +60,4 @@ function p.new(gameData)
 end
 
 return p
+--[[Category:Skills modules|!]]
