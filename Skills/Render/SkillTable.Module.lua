@@ -247,7 +247,6 @@ end
 -- Render the header row for prop.skills before the schema-specific rows.
 -- Chooses colspan/title by game, including the P5-family gradient header.
 local function renderNormalSkillsHeader(ctx, result)
-    local getGames = ctx.getGames
     local styles = ctx.styles
     local prop = ctx.prop
     local game = ctx.game
@@ -268,7 +267,7 @@ local function renderNormalSkillsHeader(ctx, result)
     elseif gameg == "majin2" then
         return result .. '"' .. styles.h .. "colspan=6|[[List of " .. gamegn .. " Skills|" .. styles.spanc .. "List of Skills</span>]]"
     elseif gameg == "p5" or gameg == "p5r" or gameg == "p5s" or gameg == "p5x" then
-        local gameData = getGames.games[gameg]
+        local gameData = ctx.gameData
         return result .. '"\n!colspan=4 style="background-color: ' .. gameData.colorb .. ";background: linear-gradient(120deg, " .. gameData.colorb .. " 42%, #000 42.1%, #000 43%, #fff 43.1%, #fff 57%, #000 57.1%, #000 58%, " .. gameData.colorb .. ' 58.1%"|[[List of ' .. gamegn .. ' Skills|<span style="color:black;text-shadow:-3px 3px 3px #0ff">List of Skills</span>]]'
     elseif gameg == "desu1" or gameg == "desu2" then
         return result .. '"' .. styles.h .. "colspan=3|[[List of " .. gamegn .. " Skills|" .. styles.spanc .. "Command Skills</span>]]"
@@ -397,7 +396,7 @@ local function renderSkillCostEffectRows(ctx, result)
             if skill.phy then
                 cost = "none"
             --[[elseif gameg == 'p5' or gameg == 'p5r' or gameg == 'p5s' or gameg == 'p5x' then
-                cost = '<span style="color:' .. getGames.games[gameg].mp2 .. '">' .. skill.cost .. '</span>' -- tints pink for magic skill]]
+                cost = '<span style="color:' .. ctx.gameData.mp2 .. '">' .. skill.cost .. '</span>' -- tints pink for magic skill]]
             --
             else
                 cost = skill.cost
@@ -421,14 +420,13 @@ end
 -- Render Skill / Effect rows with optional inherit/rumor markers after the backslash.
 -- Used by Persona-style HP rows, DDS, PQ, SMT4 guest=2, and enemy/boss rows.
 local function renderSkillEffectRows(ctx, result)
-    local getGames = ctx.getGames
     local styles = ctx.styles
     local prop = ctx.prop
     local data = ctx.data
     local gameg = ctx.gameg
     local gamed = ctx.gamed
     local noskill = ctx.noskill
-    local gameData = getGames.games[gameg]
+    local gameData = ctx.gameData
     local skill, skillcell, effect
 
     result = result .. styles.skill .. "Skill" .. styles.skillc .. "Effect"
@@ -632,14 +630,13 @@ end
 -- Render the fallback learned-skill table: Skill / Cost / Effect / Level.
 -- Covers most remaining skill lists, including P3-P5, Dx2 archetypes, and Metaphor ranks.
 local function renderDefaultSkillRows(ctx, result)
-    local getGames = ctx.getGames
     local styles = ctx.styles
     local prop = ctx.prop
     local data = ctx.data
     local gameg = ctx.gameg
     local gamed = ctx.gamed
     local noskill = ctx.noskill
-    local gameData = getGames.games[gameg]
+    local gameData = ctx.gameData
     local skill, skillcell, cost, effect
     -- Guest rows for SMT4/4A/5/5V and Soul Hackers 2 omit cost.
     local guestEffectLevelRows = (gameg == "smt4" or gameg == "smt4a" or gameg == "smt5" or gameg == "smt5v" or gameg == "sh2") and prop.guest == "1"
@@ -981,14 +978,13 @@ end
 -- Render Persona 5 Strikers combo attacks from prop.cskills.
 -- First field is the combo input key; following fields are paired skill/effect rows.
 local function renderComboAttacks(ctx, result)
-    local getGames = ctx.getGames
     local styles = ctx.styles
     local prop = ctx.prop
     local data = ctx.data
     local gameg = ctx.gameg
     local gamed = ctx.gamed
     local wikitext = ctx.wikitext
-    local gameData = getGames.games[gameg]
+    local gameData = ctx.gameData
     local skill, skillcell
 
     result = result .. styles.table2 .. styles.h .. 'colspan="4" style="background-color: ' .. gameData.colorb .. ";background: linear-gradient(120deg, " .. gameData.colorb .. " 40%, #000 40.1%, #000 41%, #fff 41.1%, #fff 59%, #000 59.1%, #000 60%, " .. gameData.colorb .. ' 60.1%"|[[Combo Attacks|<span style="color:black;text-shadow:-3px 3px 3px #0ff">Combo Attacks</span>]]'

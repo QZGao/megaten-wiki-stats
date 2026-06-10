@@ -225,7 +225,7 @@ end
 -- Render lower affinity/resistance sections after legacy drop and feature rows.
 -- Covers Persona 1/2 weapon affinities, SMT/DDS/PQ resistance blocks, restype tables, and SMT9 resistance levels.
 function p.renderPost(ctx, result)
-    local getGames = ctx.getGames
+    local gameData = ctx.gameData
     local styles = ctx.styles
     local prop = ctx.prop
     local game = ctx.game
@@ -475,7 +475,7 @@ function p.renderPost(ctx, result)
         end
     end
     if game == "smt9" and prop.reslevels then
-        styles.h = '\n!style="background:' .. getGames.games[gameg].colorbg .. ';color:#fff" '
+        styles.h = '\n!style="background:' .. gameData.colorbg .. ';color:#fff" '
         result = result .. styles.table2h .. '"' .. styles.h .. "colspan=4|" .. styles.spanc .. "[[Resistance Level]]s</span>"
         prop.reslevels = mw.text.split(prop.reslevels, "\n")
         prop.resleveltypes = {

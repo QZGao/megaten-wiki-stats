@@ -34,7 +34,8 @@ end
 -- Render top stat/header sections inside the image-span table.
 -- Covers main stat layouts for MT/KMT/SMT, Persona, Devil Summoner, Devil Survivor, Last Bible, DemiKids, DDS, PQ, Metaphor, and related games.
 function p.renderTop(ctx, result)
-    local getGames = ctx.getGames
+    local gameData = ctx.gameData
+    local baseGameData = ctx.baseGameData
     local args = ctx.args
     local styles = ctx.styles
     local prop = ctx.prop
@@ -156,15 +157,15 @@ function p.renderTop(ctx, result)
         result = result .. styles.table2 .. styles.h
         if prop.element then
             result = result .. "|Element" .. styles.h .. "|Wild Effects" .. cate("Magatama")
-            styles.barc = getGames.games[gameg].statb2
+            styles.barc = gameData.statb2
         else
-            result = result .. '|[[Race and species|<span style="color:#fff">Race</span>]]' .. bossdemoncat(prop.boss, gamen) .. styles.h .. "width=9%|Level" .. styles.h .. 'width=9%|<span style="color:' .. getGames.games[gameg].hp .. '">HP</span>' .. styles.h .. 'width=9%|<span style="color:' .. getGames.games[gameg].mp .. '">MP</span>'
+            result = result .. '|[[Race and species|<span style="color:#fff">Race</span>]]' .. bossdemoncat(prop.boss, gamen) .. styles.h .. "width=9%|Level" .. styles.h .. 'width=9%|<span style="color:' .. gameData.hp .. '">HP</span>' .. styles.h .. 'width=9%|<span style="color:' .. gameData.mp .. '">MP</span>'
         end
         result = result .. styles.bart11 .. "319px" .. styles.bart12 .. '0.8"' .. styles.barh .. "|Strength" .. styles.bard2 .. bar(styles.barc, prop.str, 6, 40) .. styles.barh .. "|Magic" .. styles.bard2 .. bar(styles.barc, prop.magic, 6, 40) .. styles.barh .. "|Vitality" .. styles.bard2 .. bar(styles.barc, prop.vit, 6, 40) .. styles.barh .. "|Agility" .. styles.bard2 .. bar(styles.barc, prop.agl, 6, 40) .. styles.barh .. "|Luck" .. styles.bard2 .. bar(styles.barc, prop.luc, 6, 40) .. "\n|}\n|-" .. styles.statlow
         if prop.element then
             result = result .. prop.element .. styles.statlow .. prop.wild
         else
-            result = result .. getRace(prop.race, gameg) .. styles.statlow .. prop.level .. styles.statlow .. prop.hp .. '<div style="position:relative;top:-4px;border:2.5px outset ' .. getGames.games[gameg].hp2 .. ';border-radius:3px"></div>' .. styles.statlow .. prop.mp .. '<div style="position:relative;top:-4px;border:2.5px outset ' .. getGames.games[gameg].mp2 .. ';border-radius:3px"></div>'
+            result = result .. getRace(prop.race, gameg) .. styles.statlow .. prop.level .. styles.statlow .. prop.hp .. '<div style="position:relative;top:-4px;border:2.5px outset ' .. gameData.hp2 .. ';border-radius:3px"></div>' .. styles.statlow .. prop.mp .. '<div style="position:relative;top:-4px;border:2.5px outset ' .. gameData.mp2 .. ';border-radius:3px"></div>'
         end
         result = result .. "\n|}"
     elseif render_game == "smtim" then
@@ -181,7 +182,7 @@ function p.renderTop(ctx, result)
         elseif not prop.mp then
             prop.mp = "?"
         end
-        result = result .. styles.table2 .. styles.h .. "|[[Race and species|" .. styles.spanc .. "Race</span>]]" .. styles.h .. "|[[Alignment|" .. styles.spanc .. "Alignment</span>]]" .. styles.h .. "|Level" .. styles.h .. 'width=7%|<span style="color:' .. getGames.games[gameg].hp .. '">HP</span>' .. styles.h .. 'width=7%|<span style="color:' .. getGames.games[gameg].mp .. '">MP</span>' .. styles.bart11 .. "274px" .. styles.bart12 .. '0.8"' .. styles.barh .. "|Strength" .. styles.bard1 .. bar(styles.barc, prop.str, 2, 99) .. styles.barh .. "|Magic" .. styles.bard1 .. bar(styles.barc, prop.magic, 2, 99) .. styles.barh .. "|Vitality" .. styles.bard1 .. bar(styles.barc, prop.vit, 2, 99) .. styles.barh .. "|Agility" .. styles.bard1 .. bar(styles.barc, prop.agl, 2, 99) .. styles.barh .. "|Luck" .. styles.bard1 .. bar(styles.barc, prop.luc, 2, 99) .. "\n|}\n|-" .. styles.statlow .. getRace(prop.race, gameg) .. styles.statlow .. prop.alignment .. styles.statlow .. prop.level .. styles.statlow .. prop.hp .. '<div style="position:relative;top:-4px;border:2.5px outset #ddbf77;border-radius:3px"></div>' .. styles.statlow .. prop.mp .. '<div style="position:relative;top:-4px;border:2.5px outset #85bd64;border-radius:3px"></div>' .. "\n|}" .. bossdemoncat(prop.boss, gamen) .. aligncat(prop.alignment, gamen)
+        result = result .. styles.table2 .. styles.h .. "|[[Race and species|" .. styles.spanc .. "Race</span>]]" .. styles.h .. "|[[Alignment|" .. styles.spanc .. "Alignment</span>]]" .. styles.h .. "|Level" .. styles.h .. 'width=7%|<span style="color:' .. gameData.hp .. '">HP</span>' .. styles.h .. 'width=7%|<span style="color:' .. gameData.mp .. '">MP</span>' .. styles.bart11 .. "274px" .. styles.bart12 .. '0.8"' .. styles.barh .. "|Strength" .. styles.bard1 .. bar(styles.barc, prop.str, 2, 99) .. styles.barh .. "|Magic" .. styles.bard1 .. bar(styles.barc, prop.magic, 2, 99) .. styles.barh .. "|Vitality" .. styles.bard1 .. bar(styles.barc, prop.vit, 2, 99) .. styles.barh .. "|Agility" .. styles.bard1 .. bar(styles.barc, prop.agl, 2, 99) .. styles.barh .. "|Luck" .. styles.bard1 .. bar(styles.barc, prop.luc, 2, 99) .. "\n|}\n|-" .. styles.statlow .. getRace(prop.race, gameg) .. styles.statlow .. prop.alignment .. styles.statlow .. prop.level .. styles.statlow .. prop.hp .. '<div style="position:relative;top:-4px;border:2.5px outset #ddbf77;border-radius:3px"></div>' .. styles.statlow .. prop.mp .. '<div style="position:relative;top:-4px;border:2.5px outset #85bd64;border-radius:3px"></div>' .. "\n|}" .. bossdemoncat(prop.boss, gamen) .. aligncat(prop.alignment, gamen)
     elseif render_game == "smt4" or render_game == "smt4a" then
         if not prop.hp then prop.hp = "?" end
         if prop.boss then
@@ -189,8 +190,8 @@ function p.renderTop(ctx, result)
         elseif not prop.mp then
             prop.mp = "?"
         end
-        styles.h = '\n!style="color:' .. getGames.games[gameg].colorbg2 .. ';background:#000" '
-        result = result .. styles.table2 .. styles.h .. '|[[Race and species|<span style="color:#fff">Race</span>]]' .. styles.h .. 'width=45px|<span style="color:' .. getGames.games[gameg].font2 .. '">Level</span>' .. styles.h .. 'width=45px|<span style="color:' .. getGames.games[gameg].hp .. '">HP</span>' .. styles.h .. 'width=45px|<span style="color:' .. getGames.games[gameg].mp .. '">MP</span>' .. styles.bart11 .. "387px" .. styles.bart12 .. '0.8"' .. styles.barh .. "|Strength" .. styles.bard2 .. bar(styles.barc, prop.str, 1.5, 200) .. styles.barh .. "|Dexterity" .. styles.bard2 .. bar(styles.barc, prop.dex, 1.5, 200) .. styles.barh .. "|Magic" .. styles.bard2 .. bar(styles.barc, prop.magic, 1.5, 200) .. styles.barh .. "|Agility" .. styles.bard2 .. bar(styles.barc, prop.agl, 1.5, 200) .. styles.barh .. "|Luck" .. styles.bard2 .. bar(styles.barc, prop.luc, 1.5, 200) .. "\n|}\n|-" .. styles.statlow .. getRace(prop.race, gameg) .. styles.statlow .. prop.level .. styles.statlow .. prop.hp .. styles.statlow .. prop.mp .. "\n|}" .. bossdemoncat(prop.boss, gamen)
+        styles.h = '\n!style="color:' .. gameData.colorbg2 .. ';background:#000" '
+        result = result .. styles.table2 .. styles.h .. '|[[Race and species|<span style="color:#fff">Race</span>]]' .. styles.h .. 'width=45px|<span style="color:' .. gameData.font2 .. '">Level</span>' .. styles.h .. 'width=45px|<span style="color:' .. gameData.hp .. '">HP</span>' .. styles.h .. 'width=45px|<span style="color:' .. gameData.mp .. '">MP</span>' .. styles.bart11 .. "387px" .. styles.bart12 .. '0.8"' .. styles.barh .. "|Strength" .. styles.bard2 .. bar(styles.barc, prop.str, 1.5, 200) .. styles.barh .. "|Dexterity" .. styles.bard2 .. bar(styles.barc, prop.dex, 1.5, 200) .. styles.barh .. "|Magic" .. styles.bard2 .. bar(styles.barc, prop.magic, 1.5, 200) .. styles.barh .. "|Agility" .. styles.bard2 .. bar(styles.barc, prop.agl, 1.5, 200) .. styles.barh .. "|Luck" .. styles.bard2 .. bar(styles.barc, prop.luc, 1.5, 200) .. "\n|}\n|-" .. styles.statlow .. getRace(prop.race, gameg) .. styles.statlow .. prop.level .. styles.statlow .. prop.hp .. styles.statlow .. prop.mp .. "\n|}" .. bossdemoncat(prop.boss, gamen)
         if not prop.phys then prop.phys = "-" end
         if not prop.gun then prop.gun = "-" end
         if not prop.fire then prop.fire = "-" end
@@ -199,8 +200,8 @@ function p.renderTop(ctx, result)
         if not prop.force then prop.force = "-" end
         if not prop.expel then prop.expel = "-" end
         if not prop.curse then prop.curse = "-" end
-        styles.h = '\n!style="background:' .. getGames.games[gameg].colorbg2
-        local statlow = '\n|style="background:' .. getGames.games[gameg].colorbg2
+        styles.h = '\n!style="background:' .. gameData.colorbg2
+        local statlow = '\n|style="background:' .. gameData.colorbg2
         if gameg == "smt4a" then
             styles.h = styles.h .. ';color:#fff" '
             statlow = statlow .. ';color:#fff"|'
@@ -209,7 +210,7 @@ function p.renderTop(ctx, result)
             statlow = statlow .. ';color:#000"|'
         end
         result = result .. styles.table2 .. styles.h .. 'width=12.5% title="Physical"|[[File:PhysIcon_SMTIV.png|alt=Physical|Physical|link=Physical Skills]] Phys' .. styles.h .. 'width=12.5% title="Gun"|[[File:GunIcon2.png|alt=Gun|Gun|link=Gun Skills]] Gun' .. styles.h .. 'width=12.5% title="Fire"|[[File:FireIcon_SMTIV.png|alt=Fire|Fire|link=Fire Skills]] Fire' .. styles.h .. 'width=12.5% title="Ice"|[[File:IceIcon_SMTIV.png|alt=Ice|Ice|link=Ice Skills]] Ice' .. styles.h .. 'width=12.5% title="Electricity"|[[File:ElecIcon_SMTIV.png|alt=Electricity|Electricity|link=Electric Skills]] Elec' .. styles.h .. 'width=12.5% title="Force"|[[File:ForceIcon.png|alt=Force|Force|link=Wind Skills]] Force' .. styles.h .. 'width=12.5% title="Light"|[[File:ExpelIcon_SMTIV.png|alt=Light|Light|link=Expel Skills]] Light' .. styles.h .. 'width=12.5% title="Dark"|[[File:CurseIcon_SMTIV.png|alt=Dark|Dark|link=Death Skills]] Dark\n|-\n' .. statlow .. prop.phys .. statlow .. prop.gun .. statlow .. prop.fire .. statlow .. prop.ice .. statlow .. prop.elec .. statlow .. prop.force .. statlow .. prop.expel .. statlow .. prop.curse .. "\n|}"
-        styles.h = '\n!style="background: ' .. getGames.games[gameg].colorbg .. ";color: " .. getGames.games[gameg].font .. '" '
+        styles.h = '\n!style="background: ' .. gameData.colorbg .. ";color: " .. gameData.font .. '" '
         result = result .. styles.table2 .. styles.h .. 'width=130px title="All enemies and guest allies are immune to ' .. "'Lost'" .. ' ailment"|<abbr>'
         if prop.almres ~= "" then
             result = result .. "Other"
@@ -260,8 +261,8 @@ function p.renderTop(ctx, result)
         elseif not prop.mp then
             prop.mp = "?"
         end
-        styles.h = '\n!style="color:' .. getGames.games[gameg].colorbg2 .. ';background:#000" '
-        result = result .. styles.table2 .. styles.h .. '|[[Race and species|<span style="color:#fff">Race</span>]]' .. styles.h .. 'width=45px|<span style="color:' .. getGames.games[gameg].font2 .. '">Level</span>' .. styles.h .. 'width=45px|<span style="color:' .. getGames.games[gameg].hp .. '">HP</span>' .. styles.h .. 'width=45px|<span style="color:' .. getGames.games[gameg].mp .. '">MP</span>' .. styles.bart11 .. "324px" .. styles.bart12 .. '0.8"' .. styles.barh .. "|Strength" .. styles.bard2 .. bar(styles.barc, prop.str, 2.4, 100) .. styles.barh .. "|Vitality" .. styles.bard2 .. bar(styles.barc, prop.vit, 2.4, 100) .. styles.barh .. "|Magic" .. styles.bard2 .. bar(styles.barc, prop.magic, 2.4, 100) .. styles.barh .. "|Agility" .. styles.bard2 .. bar(styles.barc, prop.agl, 2.4, 100) .. styles.barh .. "|Luck" .. styles.bard2 .. bar(styles.barc, prop.luc, 2.4, 100) .. "\n|}\n|-" .. styles.statlow .. getRace(prop.race, gameg) .. styles.statlow .. prop.level .. styles.statlow .. prop.hp .. styles.statlow .. prop.mp .. "\n|}" .. bossdemoncat(prop.boss, gamen) .. aligncat(prop.alignment, gamen)
+        styles.h = '\n!style="color:' .. gameData.colorbg2 .. ';background:#000" '
+        result = result .. styles.table2 .. styles.h .. '|[[Race and species|<span style="color:#fff">Race</span>]]' .. styles.h .. 'width=45px|<span style="color:' .. gameData.font2 .. '">Level</span>' .. styles.h .. 'width=45px|<span style="color:' .. gameData.hp .. '">HP</span>' .. styles.h .. 'width=45px|<span style="color:' .. gameData.mp .. '">MP</span>' .. styles.bart11 .. "324px" .. styles.bart12 .. '0.8"' .. styles.barh .. "|Strength" .. styles.bard2 .. bar(styles.barc, prop.str, 2.4, 100) .. styles.barh .. "|Vitality" .. styles.bard2 .. bar(styles.barc, prop.vit, 2.4, 100) .. styles.barh .. "|Magic" .. styles.bard2 .. bar(styles.barc, prop.magic, 2.4, 100) .. styles.barh .. "|Agility" .. styles.bard2 .. bar(styles.barc, prop.agl, 2.4, 100) .. styles.barh .. "|Luck" .. styles.bard2 .. bar(styles.barc, prop.luc, 2.4, 100) .. "\n|}\n|-" .. styles.statlow .. getRace(prop.race, gameg) .. styles.statlow .. prop.level .. styles.statlow .. prop.hp .. styles.statlow .. prop.mp .. "\n|}" .. bossdemoncat(prop.boss, gamen) .. aligncat(prop.alignment, gamen)
         if not prop.phys then prop.phys = "-" end
         if not prop.fire then prop.fire = "-" end
         if not prop.ice then prop.ice = "-" end
@@ -269,10 +270,10 @@ function p.renderTop(ctx, result)
         if not prop.force then prop.force = "-" end
         if not prop.expel then prop.expel = "-" end
         if not prop.curse then prop.curse = "-" end
-        styles.h = '\n!style="background:' .. getGames.games[gameg].colorbg2 .. ';color:#fff" '
-        local statlow = '\n|style="background:' .. getGames.games[gameg].colorbg2 .. ';color:#fff"|'
+        styles.h = '\n!style="background:' .. gameData.colorbg2 .. ';color:#fff" '
+        local statlow = '\n|style="background:' .. gameData.colorbg2 .. ';color:#fff"|'
         result = result .. styles.table2 .. styles.h .. 'width=14.8% title="Physical"|[[File:PhysIcon_SMTV.png|24px|alt=Physical|Physical|link=Physical Skills]] [[Physical Skills|<span style="color:white">Phys</span>]]' .. styles.h .. 'width=14.2% title="Fire"|[[File:FireIcon_SMTV.png|24px|alt=Fire|Fire|link=Fire Skills]] [[Fire Skills|<span style="color:white">Fire</span>]]' .. styles.h .. 'width=14.2% title="Ice"|[[File:IceIcon_SMTV.png|24px|Ice|link=Ice Skills]] [[Ice Skills|<span style="color:white">Ice</span>]]' .. styles.h .. 'width=14.2% title="Electricity"|[[File:ElecIcon_SMTV.png|24px|alt=Electricity|Electricity|link=Electric Skills]] [[Electric Skills|<span style="color:white">Elec</span>]]' .. styles.h .. 'width=14.2% title="Force"|[[File:ForceIcon_SMTV.png|24px|alt=Force|Force|link=Force Skills]] [[Force Skills|<span style="color:white">Force</span>]]' .. styles.h .. 'width=14.2% title="Light"|[[File:LightIcon_SMTV.png|24px|alt=Light|Light|link=Light Skills (Affinity)]] [[Light Skills (Affinity)|<span style="color:white">Light</span>]]' .. styles.h .. 'width=14.2% title="Dark"|[[File:DarkIcon_SMTV.png|24px|Dark|link=Dark Skills (Affinity)]] [[Dark Skills (Affinity)|<span style="color:white">Dark</span>]]\n|-\n' .. statlow .. prop.phys .. statlow .. prop.fire .. statlow .. prop.ice .. statlow .. prop.elec .. statlow .. prop.force .. statlow .. prop.expel .. statlow .. prop.curse .. "\n|}"
-        styles.h = '\n!style="background: ' .. getGames.games[gameg].colorbg .. ";color: " .. getGames.games[gameg].font .. '" '
+        styles.h = '\n!style="background: ' .. gameData.colorbg .. ";color: " .. gameData.font .. '" '
         result = result .. styles.table2 .. styles.h .. 'width=130px title="All enemies and guest allies are immune to ' .. "'Lost'" .. ' ailment"|<abbr>'
         if prop.almres ~= "" then
             result = result .. "Other"
@@ -292,7 +293,7 @@ function p.renderTop(ctx, result)
             result = result .. "\n|}"
         end
         if prop.specialty then
-            styles.h = '\n!style="background:' .. getGames.games[gameg].colorbg2 .. ';color:#fff" '
+            styles.h = '\n!style="background:' .. gameData.colorbg2 .. ';color:#fff" '
             result = result .. styles.table2h .. '"' .. styles.h .. "colspan=4|[[Skill Affinities|" .. styles.spanc .. "Skill Potential</span>]]"
             prop.specialty = mw.text.split(prop.specialty, "\n")
             prop.skilltypes = {
@@ -325,8 +326,8 @@ function p.renderTop(ctx, result)
         if not prop.hp then prop.hp = "?" end
         if not prop.rarity then prop.rarity = string.rep("★", math.ceil((tonumber(prop.level) + 1) / 20)) end
 
-        styles.h = '\n!style="color:' .. getGames.games[gameg].colorbg .. ';background:#000" '
-        result = result .. styles.table2 .. styles.h .. '|[[Race and species|<span style="color:#fff">Race</span>]]' .. styles.h .. 'width=45px|<span style"color:' .. getGames.games[gameg].font .. '">Rarity</span>' .. styles.h .. '"width=45px|<span style="color:' .. getGames.games[gameg].font .. '">Grade</span>' .. styles.h .. 'width=45px|<span style="color:' .. getGames.games[gameg].hp .. '">HP</span>' .. styles.bart11 .. "324px" .. styles.bart12 .. '0.8"' .. '\n|+<span style="font-weight:bold">6★ Stats</span>' .. styles.barh .. "|Strength" .. styles.bard2 .. bar(styles.barc, prop.str, 1, 255) .. styles.barh .. "|Magic" .. styles.bard2 .. bar(styles.barc, prop.magic, 1, 255) .. styles.barh .. "|Vitality" .. styles.bard2 .. bar(styles.barc, prop.vit, 1, 255) .. styles.barh .. "|Agility" .. styles.bard2 .. bar(styles.barc, prop.agl, 1, 255) .. styles.barh .. "|Luck" .. styles.bard2 .. bar(styles.barc, prop.luc, 1, 255) .. "\n|}\n|-" .. styles.statlow .. getRace(prop.race, gameg) .. styles.statlow .. prop.rarity .. styles.statlow .. prop.level .. styles.statlow .. prop.hp .. "\n|}" .. bossdemoncat(prop.boss, gamen) .. rarityCategory(prop.rarity, gamen)
+        styles.h = '\n!style="color:' .. gameData.colorbg .. ';background:#000" '
+        result = result .. styles.table2 .. styles.h .. '|[[Race and species|<span style="color:#fff">Race</span>]]' .. styles.h .. 'width=45px|<span style"color:' .. gameData.font .. '">Rarity</span>' .. styles.h .. '"width=45px|<span style="color:' .. gameData.font .. '">Grade</span>' .. styles.h .. 'width=45px|<span style="color:' .. gameData.hp .. '">HP</span>' .. styles.bart11 .. "324px" .. styles.bart12 .. '0.8"' .. '\n|+<span style="font-weight:bold">6★ Stats</span>' .. styles.barh .. "|Strength" .. styles.bard2 .. bar(styles.barc, prop.str, 1, 255) .. styles.barh .. "|Magic" .. styles.bard2 .. bar(styles.barc, prop.magic, 1, 255) .. styles.barh .. "|Vitality" .. styles.bard2 .. bar(styles.barc, prop.vit, 1, 255) .. styles.barh .. "|Agility" .. styles.bard2 .. bar(styles.barc, prop.agl, 1, 255) .. styles.barh .. "|Luck" .. styles.bard2 .. bar(styles.barc, prop.luc, 1, 255) .. "\n|}\n|-" .. styles.statlow .. getRace(prop.race, gameg) .. styles.statlow .. prop.rarity .. styles.statlow .. prop.level .. styles.statlow .. prop.hp .. "\n|}" .. bossdemoncat(prop.boss, gamen) .. rarityCategory(prop.rarity, gamen)
         if not prop.seealso then prop.seealso = mw.title.getCurrentTitle().text end
         result = result .. styles.table2 .. styles.h .. 'title="Physical Attack"|Phys ATK' .. styles.h .. 'title="Physical Defense"|Phys DEF' .. styles.h .. 'title="Magical Attack"|Mag ATK' .. styles.h .. 'title="Magical Defense"|Mag DEF' .. styles.h .. "|See Also" .. "\n|-" .. styles.statlow .. prop.atk .. styles.statlow .. prop.def .. styles.statlow .. prop.matk .. styles.statlow .. prop.mdef .. styles.statlow .. "[https://dx2wiki.com/index.php/" .. string.gsub(prop.seealso, " ", "_") .. "]\n|}"
         if not prop.phys then prop.phys = "-" end
@@ -336,8 +337,8 @@ function p.renderTop(ctx, result)
         if not prop.force then prop.force = "-" end
         if not prop.expel then prop.expel = "-" end
         if not prop.dark then prop.dark = "-" end
-        styles.h = '\n!style="background:' .. getGames.games[gameg].colorbg .. ';color:#fff" '
-        local statlow = '\n|style="background:' .. getGames.games[gameg].colorbg .. ';color:#fff"|'
+        styles.h = '\n!style="background:' .. gameData.colorbg .. ';color:#fff" '
+        local statlow = '\n|style="background:' .. gameData.colorbg .. ';color:#fff"|'
         result = result .. styles.table2 .. styles.h .. 'width=14.8% title="Physical"|[[File:SMT_Dx2_Physical_Skill_Icon.png|24px|alt=Physical|Physical|link=Physical Skills]] [[Physical Skills|<span style="color:white">Phys</span>]]' .. styles.h .. 'width=14.2% title="Fire"|[[File:SMT_Dx2_Fire_Skill_Icon.png|24px|alt=Fire|Fire|link=Fire Skills]] [[Fire Skills|<span style="color:white">Fire</span>]]' .. styles.h .. 'width=14.2% title="Ice"|[[File:SMT_Dx2_Ice_Skill_Icon.png|24px|Ice|link=Ice Skills]] [[Ice Skills|<span style="color:white">Ice</span>]]' .. styles.h .. 'width=14.2% title="Electricity"|[[File:SMT_Dx2_Electricity_Skill_Icon.png|24px|alt=Electricity|Electricity|link=Electric Skills]] [[Electric Skills|<span style="color:white">Elec</span>]]' .. styles.h .. 'width=14.2% title="Force"|[[File:SMT_Dx2_Force_Skill_Icon.png|24px|alt=Force|Force|link=Force Skills]] [[Force Skills|<span style="color:white">Force</span>]]' .. styles.h .. 'width=14.2% title="Light"|[[File:SMT_Dx2_Light_Skill_Icon.png|24px|alt=Light|Light|link=Light Skills (Affinity)]] [[Light Skills (Affinity)|<span style="color:white">Light</span>]]' .. styles.h .. 'width=14.2% title="Dark"|[[File:SMT_Dx2_Dark_Skill_Icon.png|24px|Dark|link=Dark Skills (Affinity)]] [[Dark Skills (Affinity)|<span style="color:white">Dark</span>]]\n|-\n' .. statlow .. prop.phys .. statlow .. prop.fire .. statlow .. prop.ice .. statlow .. prop.elec .. statlow .. prop.force .. statlow .. prop.expel .. statlow .. prop.dark .. "\n|}"
     elseif render_game == "lb1" or render_game == "lb2" or render_game == "lb3" or render_game == "lbs" then
         if not prop.hp then prop.hp = "?" end
@@ -484,8 +485,8 @@ function p.renderTop(ctx, result)
         elseif not prop.mp then
             prop.mp = "?"
         end
-        styles.h = '\n!style="color:' .. getGames.games[gameg].colorbg2 .. ';background:#000" '
-        result = result .. styles.table2 .. styles.h .. '|[[Race and species|<span style="color:#fff">Race</span>]]' .. styles.h .. 'width=45px|<span style="color:' .. getGames.games[gameg].font2 .. '">Level</span>' .. styles.h .. 'width=45px|<span style="color:' .. getGames.games[gameg].hp .. '">HP</span>' .. styles.h .. 'width=45px|<span style="color:' .. getGames.games[gameg].mp .. '">MP</span>' .. styles.bart11 .. "324px" .. styles.bart12 .. '0.8"' .. styles.barh .. "|Strength" .. styles.bard2 .. bar(styles.barc, prop.str, 2.4, 100) .. styles.barh .. "|Intelligence" .. styles.bard2 .. bar(styles.barc, prop.int, 2.4, 100) .. styles.barh .. "|Vitality" .. styles.bard2 .. bar(styles.barc, prop.vit, 2.4, 100) .. styles.barh .. "|Agility" .. styles.bard2 .. bar(styles.barc, prop.agl, 2.4, 100) .. styles.barh .. "|Luck" .. styles.bard2 .. bar(styles.barc, prop.luc, 2.4, 100) .. "\n|}\n|-" .. styles.statlow .. getRace(prop.race, gameg) .. styles.statlow .. prop.level .. styles.statlow .. prop.hp .. styles.statlow .. prop.mp .. "\n|}" .. bossdemoncat(prop.boss, gamen) .. aligncat(prop.alignment, gamen)
+        styles.h = '\n!style="color:' .. gameData.colorbg2 .. ';background:#000" '
+        result = result .. styles.table2 .. styles.h .. '|[[Race and species|<span style="color:#fff">Race</span>]]' .. styles.h .. 'width=45px|<span style="color:' .. gameData.font2 .. '">Level</span>' .. styles.h .. 'width=45px|<span style="color:' .. gameData.hp .. '">HP</span>' .. styles.h .. 'width=45px|<span style="color:' .. gameData.mp .. '">MP</span>' .. styles.bart11 .. "324px" .. styles.bart12 .. '0.8"' .. styles.barh .. "|Strength" .. styles.bard2 .. bar(styles.barc, prop.str, 2.4, 100) .. styles.barh .. "|Intelligence" .. styles.bard2 .. bar(styles.barc, prop.int, 2.4, 100) .. styles.barh .. "|Vitality" .. styles.bard2 .. bar(styles.barc, prop.vit, 2.4, 100) .. styles.barh .. "|Agility" .. styles.bard2 .. bar(styles.barc, prop.agl, 2.4, 100) .. styles.barh .. "|Luck" .. styles.bard2 .. bar(styles.barc, prop.luc, 2.4, 100) .. "\n|}\n|-" .. styles.statlow .. getRace(prop.race, gameg) .. styles.statlow .. prop.level .. styles.statlow .. prop.hp .. styles.statlow .. prop.mp .. "\n|}" .. bossdemoncat(prop.boss, gamen) .. aligncat(prop.alignment, gamen)
         if not prop.phys then prop.phys = "-" end
         if not prop.gun then prop.gun = "-" end
         if not prop.fire then prop.fire = "-" end
@@ -497,7 +498,7 @@ function p.renderTop(ctx, result)
         styles.h = '\n!style="background:#000;color:#fff" '
         local statlow = '\n|style="background:#000;color:#fff"|'
         result = result .. styles.table2 .. styles.h .. 'width=12.5% title="Physical"|[[File:SH2_Physical.png|24px|alt=Physical|Physical|link=Physical Skills]] [[Physical Skills|<span style="color:#fff">Phys</span>]]' .. styles.h .. 'width=12.5% title="Gunfire"|[[File:SH2_Gun.png|24px|alt=Gun|Gun|link=Gun Skills]] [[Gun Skills|<span style="color:#fff">Gun.</span>]]' .. styles.h .. 'width=12.5% title="Fire"|[[File:SH2_Fire.png|24px|alt=Fire|Fire|link=Fire Skills]] [[Fire Skills|<span style="color:#fff">Fire</span>]]' .. styles.h .. 'width=12.5% title="Ice"|[[File:SH2_Ice.png|24px|Ice|link=Ice Skills]] [[Ice Skills|<span style="color:#fff">Ice</span>]]' .. styles.h .. 'width=12.5% title="Electricity"|[[File:SH2_Elec.png|24px|alt=Electricity|Electricity|link=Electric Skills]] [[Electric Skills|<span style="color:#fff">Elec</span>]]' .. styles.h .. 'width=12.5% title="Force"|[[File:SH2_Force.png|24px|alt=Force|Force|link=Force Skills]] [[Force Skills|<span style="color:#fff">Force</span>]]' .. styles.h .. 'width=12.5% title="Ruin"|[[File:SH2_Ailment.png|24px|alt=Ruin|Ruin|link=Ailment Skills]] [[Ailment Skills|<span style="color:#fff">Ruin</span>]]' .. styles.h .. 'width=12.5% title="Almighty"|[[File:SH2_Almighty.png|24px|Almighty|link=Almighty Skills]] [[Almighty Skills|<span style="color:#fff">Almi.</span>]]\n|-\n' .. statlow .. prop.phys .. statlow .. prop.gun .. statlow .. prop.fire .. statlow .. prop.ice .. statlow .. prop.elec .. statlow .. prop.force .. statlow .. prop.ruin .. statlow .. prop.alm .. "\n|}"
-        styles.h = '\n!style="background: ' .. getGames.games[gameg].colorbg .. ";color: " .. getGames.games[gameg].font .. '" '
+        styles.h = '\n!style="background: ' .. gameData.colorbg .. ";color: " .. gameData.font .. '" '
         if prop.gift then result = result .. styles.table2 .. styles.h .. "width=70px|[[Gift|" .. styles.spanc .. "Gift</span>]]" .. styles.order .. prop.gift .. "\n|}" end
     elseif render_game == "raidou1" or render_game == "raidou2" then
         if prop.str == "" then prop.str = "-" end
@@ -663,7 +664,6 @@ function p.renderTop(ctx, result)
             or vit == "i" or tonumber(vit) ~= nil
             or agl == "i" or tonumber(agl) ~= nil
             or luc == "i" or tonumber(luc) ~= nil
-        local game_data = getGames.games[gameg]
         local stat_table = styles.table2
         local stat_categories = ""
         if has_arcana then
@@ -684,10 +684,10 @@ function p.renderTop(ctx, result)
             stat_table = stat_table .. styles.statlow .. getArcana(prop.arcana, gameg, gamegn)
         end
         stat_table = stat_table .. styles.statlow .. prop.level
-        if prop.hp then stat_table = stat_table .. styles.statlow .. prop.hp .. '<div style="position:relative;top:-4px;border:2.5px solid ' .. game_data.hp2 .. '"></div>' end
-        if prop.mp then stat_table = stat_table .. styles.statlow .. prop.mp .. '<div style="position:relative;top:-4px;border:2.5px solid ' .. game_data.mp2 .. '"></div>' end
-        if prop.maxhp then stat_table = stat_table .. styles.statlow .. prop.maxhp .. '<div style="position:relative;top:-4px;border:2.5px solid ' .. game_data.hp2 .. '"></div>' end
-        if prop.maxmp then stat_table = stat_table .. styles.statlow .. prop.maxmp .. '<div style="position:relative;top:-4px;border:2.5px solid ' .. game_data.mp2 .. '"></div>' end
+        if prop.hp then stat_table = stat_table .. styles.statlow .. prop.hp .. '<div style="position:relative;top:-4px;border:2.5px solid ' .. gameData.hp2 .. '"></div>' end
+        if prop.mp then stat_table = stat_table .. styles.statlow .. prop.mp .. '<div style="position:relative;top:-4px;border:2.5px solid ' .. gameData.mp2 .. '"></div>' end
+        if prop.maxhp then stat_table = stat_table .. styles.statlow .. prop.maxhp .. '<div style="position:relative;top:-4px;border:2.5px solid ' .. gameData.hp2 .. '"></div>' end
+        if prop.maxmp then stat_table = stat_table .. styles.statlow .. prop.maxmp .. '<div style="position:relative;top:-4px;border:2.5px solid ' .. gameData.mp2 .. '"></div>' end
         if gameg == "p5s" and prop.stagger then stat_table = stat_table .. styles.statlow .. prop.stagger end
         if prop.traits then stat_table = stat_table .. styles.statlow .. prop.traits end
         stat_table = stat_table .. "\n|}"
@@ -769,10 +769,10 @@ function p.renderTop(ctx, result)
         result = result .. styles.bart11 .. "324px" .. styles.bart12 .. '0.8"' .. styles.barh .. "|Strength" .. styles.bard2 .. bar(styles.barc, prop.str, 2.4, 99) .. styles.barh .. "|Magic" .. styles.bard2 .. bar(styles.barc, prop.magic, 2.4, 99) .. styles.barh .. "|Endurance" .. styles.bard2 .. bar(styles.barc, prop.vit, 2.4, 99) .. styles.barh .. "|Agility" .. styles.bard2 .. bar(styles.barc, prop.agl, 2.4, 99) .. styles.barh .. "|Luck" .. styles.bard2 .. bar(styles.barc, prop.luc, 2.4, 99) .. "\n|}\n|-"
         if not prop.hp then result = result .. styles.statlow .. "[[" .. prop.archetype .. " (Archetype)|" .. prop.archetype .. "]]" end
         result = result .. styles.statlow .. prop.level
-        if prop.hp then result = result .. styles.statlow .. prop.hp .. '<div style="position:relative;top:-4px;border:2.5px solid ' .. getGames.games[gameg].hp2 .. '"></div>' end
-        if prop.mp then result = result .. styles.statlow .. prop.mp .. '<div style="position:relative;top:-4px;border:2.5px solid ' .. getGames.games[gameg].mp2 .. '"></div>' end
-        if prop.maxhp then result = result .. styles.statlow .. prop.maxhp .. '<div style="position:relative;top:-4px;border:2.5px solid ' .. getGames.games[gameg].hp2 .. '"></div>' end
-        if prop.maxmp then result = result .. styles.statlow .. prop.maxmp .. '<div style="position:relative;top:-4px;border:2.5px solid ' .. getGames.games[gameg].mp2 .. '"></div>' end
+        if prop.hp then result = result .. styles.statlow .. prop.hp .. '<div style="position:relative;top:-4px;border:2.5px solid ' .. gameData.hp2 .. '"></div>' end
+        if prop.mp then result = result .. styles.statlow .. prop.mp .. '<div style="position:relative;top:-4px;border:2.5px solid ' .. gameData.mp2 .. '"></div>' end
+        if prop.maxhp then result = result .. styles.statlow .. prop.maxhp .. '<div style="position:relative;top:-4px;border:2.5px solid ' .. gameData.hp2 .. '"></div>' end
+        if prop.maxmp then result = result .. styles.statlow .. prop.maxmp .. '<div style="position:relative;top:-4px;border:2.5px solid ' .. gameData.mp2 .. '"></div>' end
         result = result .. "\n|}"
         if prop.hp then
             if prop.boss then
@@ -827,7 +827,7 @@ function p.renderTop(ctx, result)
     elseif render_game == "cs" then
         if not prop.mp then prop.mp = "?" end
         if not prop.mp then prop.mp = "?" end
-        result = result .. styles.table2 .. styles.h .. "|[[Race and species|" .. styles.spanc .. "Race</span>]]" .. styles.h .. "|Level" .. styles.h .. "|HP" .. styles.h .. "|MP" .. styles.h .. 'title="Strength"|St' .. styles.h .. 'title="Endurance"|En' .. styles.h .. 'title="Magic"|Ma' .. styles.h .. 'title="Agility"|Ag\n|-\n' .. styles.statlow .. getRace(prop.race, gameg) .. styles.statlow .. prop.level .. styles.statlow .. prop.hp .. styles.statlow .. prop.mp .. styles.statlow .. prop.str .. styles.statlow .. prop.def .. styles.statlow .. prop.magic .. styles.statlow .. prop.agl .. "\n|}" .. cate(getGames.games[gameg].name2 .. " Demons")
+        result = result .. styles.table2 .. styles.h .. "|[[Race and species|" .. styles.spanc .. "Race</span>]]" .. styles.h .. "|Level" .. styles.h .. "|HP" .. styles.h .. "|MP" .. styles.h .. 'title="Strength"|St' .. styles.h .. 'title="Endurance"|En' .. styles.h .. 'title="Magic"|Ma' .. styles.h .. 'title="Agility"|Ag\n|-\n' .. styles.statlow .. getRace(prop.race, gameg) .. styles.statlow .. prop.level .. styles.statlow .. prop.hp .. styles.statlow .. prop.mp .. styles.statlow .. prop.str .. styles.statlow .. prop.def .. styles.statlow .. prop.magic .. styles.statlow .. prop.agl .. "\n|}" .. cate(gameData.name2 .. " Demons")
     elseif render_game == "ddsaga1" or render_game == "ddsaga2" then
         if gameg == "ddsaga2" and prop.boss then
             prop.mp = "∞"
@@ -837,7 +837,7 @@ function p.renderTop(ctx, result)
         if not prop.normal then prop.normal = "-" end
         result = result .. styles.table2 .. styles.h .. "|[[Race and species|" .. styles.spanc .. "Race</span>]]" .. styles.h .. "|Level" .. styles.h .. "|HP" .. styles.h .. "|MP" .. styles.h .. "|Drops\n|-\n" .. styles.statlow .. getRace(prop.race, gameg) .. styles.statlow .. prop.level .. styles.statlow .. prop.hp .. styles.statlow .. prop.mp .. styles.statlow .. prop.normal .. "\n|}" .. bossdemoncat(prop.boss, gamen)
     elseif render_game == "desu1" or render_game == "desu2" then
-        result = result .. styles.table2 .. styles.h .. "|[[Race and species|" .. styles.spanc .. "Race</span>]]" .. styles.h .. "width=10%|Level" .. styles.h .. "width=10%|HP" .. styles.h .. "width=10%|MP" .. styles.bart11 .. "315px" .. styles.bart12 .. '1"' .. styles.barh .. "|Strength" .. styles.bard1 .. bar(styles.barc, prop.str, 6, 40) .. styles.barh .. "|Magic" .. styles.bard1 .. bar(styles.barc, prop.magic, 6, 40) .. styles.barh .. "|Vitality" .. styles.bard1 .. bar(styles.barc, prop.vit, 6, 40) .. styles.barh .. "|Agility" .. styles.bard1 .. bar(styles.barc, prop.agl, 6, 40) .. "\n|}\n|-" .. styles.statlow .. getRace(prop.race, gameg) .. styles.statlow .. prop.level .. styles.statlow .. prop.hp .. '<div style="position:relative;top:-4px;border:2.5px outset ' .. getGames.games[gameg].hp2 .. ';border-radius:3px"></div>' .. styles.statlow .. prop.mp .. '<div style="position:relative;top:-4px;border:2.5px outset ' .. getGames.games[gameg].mp2 .. ';border-radius:3px"></div>\n|}'
+        result = result .. styles.table2 .. styles.h .. "|[[Race and species|" .. styles.spanc .. "Race</span>]]" .. styles.h .. "width=10%|Level" .. styles.h .. "width=10%|HP" .. styles.h .. "width=10%|MP" .. styles.bart11 .. "315px" .. styles.bart12 .. '1"' .. styles.barh .. "|Strength" .. styles.bard1 .. bar(styles.barc, prop.str, 6, 40) .. styles.barh .. "|Magic" .. styles.bard1 .. bar(styles.barc, prop.magic, 6, 40) .. styles.barh .. "|Vitality" .. styles.bard1 .. bar(styles.barc, prop.vit, 6, 40) .. styles.barh .. "|Agility" .. styles.bard1 .. bar(styles.barc, prop.agl, 6, 40) .. "\n|}\n|-" .. styles.statlow .. getRace(prop.race, gameg) .. styles.statlow .. prop.level .. styles.statlow .. prop.hp .. '<div style="position:relative;top:-4px;border:2.5px outset ' .. gameData.hp2 .. ';border-radius:3px"></div>' .. styles.statlow .. prop.mp .. '<div style="position:relative;top:-4px;border:2.5px outset ' .. gameData.mp2 .. ';border-radius:3px"></div>\n|}'
         if prop.boss then
             if gameg == "desu1" and game ~= "desu1oc" then
                 result = result .. cate(gamegn .. " Bosses") .. cate("Devil Survivor Overclocked Bosses")
@@ -876,7 +876,7 @@ function p.renderTop(ctx, result)
             elseif game == "dcwb" then
                 result = result .. cate(gamen .. " Demons")
             elseif gameg == "dcbrb" then
-                result = result .. cate(getGames.games[gameg].name1 .. " Demons") .. cate(getGames.games[gameg].name2 .. " Demons")
+                result = result .. cate(gameData.name1 .. " Demons") .. cate(gameData.name2 .. " Demons")
             end
         end
         result = result .. cate(prop.race .. " Race")
@@ -891,7 +891,7 @@ function p.renderTop(ctx, result)
         result = result .. styles.table2 .. styles.h .. 'width=16.67% title="Attack Power"|ATK' .. styles.h .. 'width=16.67% title="Defense"|DEF' .. styles.h .. 'width=16.67% title="Magic"|MGC' .. styles.h .. 'width=16.67% title="Resistance"|RES' .. styles.h .. 'width=16.67% title="Speed"|SPD' .. styles.h .. 'width=16.67% title="Luck"|LCK\n|-\n' .. styles.statlow .. prop.atk .. styles.statlow .. prop.def .. styles.statlow .. prop.magic .. styles.statlow .. prop.res .. styles.statlow .. prop.agl .. styles.statlow .. prop.luc .. "\n|}"
         if prop.boss then
             if gameg == "childlight" then
-                result = result .. cate(getGames.games[gameg].name3 .. " Bosses")
+                result = result .. cate(gameData.name3 .. " Bosses")
             else
                 result = result .. cate(gamen .. " Bosses")
             end
@@ -901,11 +901,11 @@ function p.renderTop(ctx, result)
             elseif gameg == "childwhite" then
                 result = result .. cate(gamen .. " Demons")
             elseif gameg == "childred" then
-                result = result .. cate(getGames.games[gameg].name1 .. " Demons") .. cate(getGames.games[gameg].name2 .. " Demons")
+                result = result .. cate(gameData.name1 .. " Demons") .. cate(gameData.name2 .. " Demons")
             elseif gameg == "childfire" then
-                result = result .. cate(getGames.games[gameg].name1 .. " Demons") .. cate(getGames.games[gameg].name2 .. " Demons")
+                result = result .. cate(gameData.name1 .. " Demons") .. cate(gameData.name2 .. " Demons")
             elseif gameg == "childlight" then
-                result = result .. cate(getGames.games[gameg].name1 .. " Demons") .. cate(getGames.games[gameg].name2 .. " Demons")
+                result = result .. cate(gameData.name1 .. " Demons") .. cate(gameData.name2 .. " Demons")
             end
         end
         result = result .. cate(prop.race .. " Type")
@@ -929,7 +929,7 @@ function p.renderTop(ctx, result)
         end
         if not prop.spell then prop.spell = prop.spell end
         result = result .. styles.table2 .. styles.h .. "|Number" .. styles.h .. "|Element" .. styles.h .. "|Weakness" .. styles.h .. "|Type" .. styles.h .. "|Level" .. styles.h .. "|HP" .. styles.h .. "|MP\n|-" .. styles.statlow .. prop.number .. styles.statlow .. prop.element .. styles.statlow .. prop.weak .. styles.statlow .. prop.race .. styles.statlow .. prop.level .. styles.statlow .. prop.hp .. styles.statlow .. prop.mp .. "\n|}"
-        result = result .. styles.table2 .. styles.h .. 'title="Attack"|ATK' .. styles.h .. 'title="Magic"|MGC' .. styles.h .. 'title="Defense"|DEF' .. styles.h .. 'title="Resistance"|RES' .. styles.h .. 'title="Speed"|SPD' .. styles.h .. "|Quick" .. styles.h .. "|Call" .. styles.h .. "|Spell\n|-" .. styles.statlow .. prop.atk .. styles.statlow .. prop.magic .. styles.statlow .. prop.def .. styles.statlow .. prop.res .. styles.statlow .. prop.agl .. styles.statlow .. prop.quick .. styles.statlow .. prop.call .. styles.statlow .. prop.spell .. "\n|}" .. cate(prop.race .. " Type") .. bossdemoncat(prop.boss, getGames.games[game].name2)
+        result = result .. styles.table2 .. styles.h .. 'title="Attack"|ATK' .. styles.h .. 'title="Magic"|MGC' .. styles.h .. 'title="Defense"|DEF' .. styles.h .. 'title="Resistance"|RES' .. styles.h .. 'title="Speed"|SPD' .. styles.h .. "|Quick" .. styles.h .. "|Call" .. styles.h .. "|Spell\n|-" .. styles.statlow .. prop.atk .. styles.statlow .. prop.magic .. styles.statlow .. prop.def .. styles.statlow .. prop.res .. styles.statlow .. prop.agl .. styles.statlow .. prop.quick .. styles.statlow .. prop.call .. styles.statlow .. prop.spell .. "\n|}" .. cate(prop.race .. " Type") .. bossdemoncat(prop.boss, baseGameData.name2)
     end
     return result
 end

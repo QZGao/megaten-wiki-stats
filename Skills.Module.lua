@@ -499,14 +499,16 @@ function p._stats(args)
     if args.BR or args.RB then game = "desu2rb" end
     if args.DC then game = "20xxdc" end
     if args.TMSFE then game = "tmsfe" end
+    local baseGameData = getGames.games[game]
     local gameg -- Game general style
-    if getGames.games[game].fallback then
-        gameg = getGames.games[game].fallback -- e.g. 'p3f' and 'p3p' will fall back to 'p3' if applicable.
+    if baseGameData.fallback then
+        gameg = baseGameData.fallback -- e.g. 'p3f' and 'p3p' will fall back to 'p3' if applicable.
     else
         gameg = game
     end
-    local gamen = getGames.games[game].name -- Full game name
-    local gamegn = getGames.games[gameg].name -- e.g. 'Persona 3 FES' will fall back to 'Persona 3' if applicable.
+    local gameData = getGames.games[gameg]
+    local gamen = baseGameData.name -- Full game name
+    local gamegn = gameData.name -- e.g. 'Persona 3 FES' will fall back to 'Persona 3' if applicable.
     local gamed
     if gameg == "mt1" or gameg == "mt2" then
         gamed = "KMT"
@@ -527,10 +529,11 @@ function p._stats(args)
     if not (gameg == "smt9" or gameg == "20xx" or game == "lb3" or game == "lbs" or game == "ronde" or game == "cs") then data = require("Module:Skills/" .. gamed) end
     local prop = get_prop(args)
     return Render.render({
-        getGames = getGames,
         args = args,
         data = data,
         prop = prop,
+        baseGameData = baseGameData,
+        gameData = gameData,
         game = game,
         gameg = gameg,
         gamen = gamen,

@@ -6,6 +6,22 @@ local SkillTable = require("Module:Skills/Render/SkillTable")
 
 local p = {}
 
+-- Return per-render game metadata without mutating Module:Gamedata.
+-- SMT3 historically rendered `colorbg` as `colorbg2` after overwriting the shared metadata table.
+local function getEffectiveGameData(gameg, gameData)
+    if gameg ~= "smt3" then
+        return gameData
+    end
+
+    local effectiveGameData = {}
+    for key, value in pairs(gameData) do
+        effectiveGameData[key] = value
+    end
+    effectiveGameData.colorbg = gameData.colorbg2
+
+    return effectiveGameData
+end
+
 -- Return the name and optional type for Persona 3 Reload Theurgy characteristic rows.
 -- Missing type stays nil so the badge is omitted, matching the legacy single-field behavior.
 local function splitTheurgyTrait(text)
@@ -49,25 +65,26 @@ end
 -- Render the full stats box after Module:Skills has normalized args and built context.
 -- Coordinates top stats, affinities, drops/rewards, miscellaneous rows, and the skill table in legacy output order.
 function p.render(ctx)
-    local getGames = ctx.getGames
     local prop = ctx.prop
     local data = ctx.data
     local game = ctx.game
     local gameg = ctx.gameg
+    local gameData = getEffectiveGameData(gameg, ctx.gameData)
     local gamegn = ctx.gamegn
     local gamed = ctx.gamed
     local noskill = ctx.noskill
     local wikitext = ctx.wikitext
+
+    ctx.gameData = gameData
 
     -- Let top affinity rendering merge with pending Persona/P5X/Metaphor stat rows.
     -- The child module stays focused on affinity markup while this coordinator owns row placement.
     ctx.appendTopAffinityTable = function(result, affinity_table)
         return appendTopAffinityTable(ctx, result, affinity_table)
     end
-    if gameg == "smt3" then getGames.games[gameg].colorbg = getGames.games[gameg].colorbg2 end
-    local styles = Style.new(getGames.games[gameg])
-    local result = '{|align="center" style="min-width:650px;text-align:center; background: #222; border:2px solid ' .. getGames.games[gameg].colorb .. '; border-radius:10px; font-size:75%; font-family:verdana;"\n|-\n|' .. styles.table2b
-    if gameg == "sh2" then result = '{|align="center" style="min-width:650px;text-align:center; background: #222; border:2px solid ' .. getGames.games[gameg].colorbg .. '; border-radius:10px; font-size:75%; font-family:verdana;"\n|-\n|' .. styles.table2b end
+    local styles = Style.new(gameData)
+    local result = '{|align="center" style="min-width:650px;text-align:center; background: #222; border:2px solid ' .. gameData.colorb .. '; border-radius:10px; font-size:75%; font-family:verdana;"\n|-\n|' .. styles.table2b
+    if gameg == "sh2" then result = '{|align="center" style="min-width:650px;text-align:center; background: #222; border:2px solid ' .. gameData.colorbg .. '; border-radius:10px; font-size:75%; font-family:verdana;"\n|-\n|' .. styles.table2b end
     if prop.image then
         result = result .. '\n!style="width:20px;border:#333 solid 2px;border-radius:7px;background:'
         if game == "smt1" then
@@ -257,10 +274,10 @@ function p.render(ctx)
     end
     result = Drops.renderFusionRewards(ctx, result)
     result = SkillTable.render({
-        getGames = getGames,
         styles = styles,
         prop = prop,
         data = data,
+        gameData = gameData,
         game = game,
         gameg = gameg,
         gamegn = gamegn,

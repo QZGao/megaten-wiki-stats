@@ -42,8 +42,8 @@ function p.new(gameData)
     if gameData then
         styles.h = '\n!style="background: ' .. gameData.colorbg .. ";color: " .. gameData.font .. '" '
         styles.spanc = '<span style="color:' .. gameData.font .. '">'
-        if not gameData.statt then gameData.statt = "#529488" end
-        styles.barh = '\n|style="color:' .. gameData.statt .. '" '
+        local statTextColor = gameData.statt or "#529488"
+        styles.barh = '\n|style="color:' .. statTextColor .. '" '
         styles.bart11 = '\n|rowspan=2 style="padding:0" width='
         styles.bart12 = '|\n{|cellspacing=2 cellpadding=0 style="background:transparent;font-size:11px;font-family:monospace;letter-spacing:-1px;line-height:'
         styles.bard = '\n|style="text-align:right;padding:0 3px" '
