@@ -8,6 +8,27 @@
 - Avoid distant predicate helpers and one-use locals unless they remove repeated work in a hot path.
 - Keep helpers close to the renderer that uses them.
 - Isolate visible output fixes from parity-preserving cleanup.
+- Use the local pywikibot scripts for sandbox upload and render comparison; do not pause for manual sandbox uploads.
+
+## Automation Scripts
+
+- `scripts/sync_from_live.py`
+  - Purpose: maintainer-run reset tool for refreshing local `src/` files and sandbox module pages from live module pages.
+  - Default: dry-run only.
+  - `--write`: replaces local `src/` files with live source and replaces sandbox pages with live source plus scoped `/sandbox` module references.
+
+- `scripts/upload_modules.py`
+  - Purpose: upload local `src/` files to wiki module pages.
+  - Default destination: sandbox pages, with scoped references to the tracked module set rewritten to `/sandbox`.
+  - `--live`: publish exact local source to live module pages instead of sandbox pages.
+  - Default: dry-run only.
+  - `--write`: saves changed target pages.
+  - Live publish should still be explicit; use `--live --write` only when the user asks to publish live.
+
+- `scripts/compare_sandbox_render.py`
+  - Purpose: compare `User:Greykid/sandbox2` and `User:Greykid/sandbox3` rendered parser HTML.
+  - Uses pywikibot only.
+  - For each page, purges, queries rendered HTML, retries purge/query once if Lua timeout text appears, then compares exact HTML by default.
 
 ## Verification
 
@@ -15,10 +36,12 @@ After each local cleanup batch:
 
 1. Run Lua parse checks for changed Lua modules.
 2. Run `git diff --check`.
-3. Report changed upload targets.
-4. Wait for on-wiki sandbox upload.
-5. Run `python .\compare_sandbox_render.py`.
-6. Stop immediately if exact HTML comparison shows any difference.
+3. Upload local source to sandbox pages:
+   - `.\.venv\Scripts\python.exe .\scripts\upload_modules.py --write`
+4. Run exact sandbox render comparison:
+   - `.\.venv\Scripts\python.exe .\scripts\compare_sandbox_render.py`
+5. Stop immediately if exact HTML comparison shows any unexpected difference.
+6. Report changed files, sandbox upload result, and comparison result.
 
 ## Cleanup Order
 
