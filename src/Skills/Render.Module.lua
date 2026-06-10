@@ -122,6 +122,7 @@ function p.render(ctx)
     end
     local styles = Style.new(gameData)
     local root_border = gameg == "sh2" and gameData.colorbg or gameData.colorb
+    
     local result = '{|align="center" style="min-width:650px;text-align:center; background: #222; border:2px solid ' .. root_border .. '; border-radius:10px; font-size:75%; font-family:verdana;"\n|-\n|' .. styles.table2b
     if prop.image then
         result = result .. '\n!style="width:20px;border:#333 solid 2px;border-radius:7px;background:'
@@ -143,6 +144,7 @@ function p.render(ctx)
     result = Stats.renderTop(ctx, result)
     result = Affinity.renderTop(ctx, result)
     result = flushPendingTopStats(ctx, result)
+
     if (gameg == "p2is" or gameg == "p2ep") and (prop.exclusive or prop.traits or prop.convo) then
         result = result .. styles.table2
         if prop.exclusive then result = result .. styles.h .. "width=90px|Exclusive to" .. styles.order .. prop.exclusive end
@@ -263,6 +265,7 @@ function p.render(ctx)
     result = Drops.renderPersona5Rewards(ctx, result)
     result = result .. "\n|}"
     -- End of image span.
+
     result = Drops.renderLegacyRewards(ctx, result)
     result = Affinity.renderSmtIfLegacy(ctx, result)
     if game == "smtim" then
@@ -288,6 +291,7 @@ function p.render(ctx)
         end
     end
     result = Drops.renderFusionRewards(ctx, result)
+
     result = SkillTable.render({
         styles = styles,
         prop = prop,
@@ -300,6 +304,7 @@ function p.render(ctx)
         noskill = noskill,
         wikitext = wikitext,
     }, result)
+    
     if (gameg == "desu1" or gameg == "desu2") and (prop.quote or prop.profile) then
         result = result .. styles.table2
         if prop.quote then result = result .. styles.quote .. 'font-style:italic"|' .. string.gsub(prop.quote, "!!", "‼") end
