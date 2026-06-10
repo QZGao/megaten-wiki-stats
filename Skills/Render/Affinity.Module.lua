@@ -222,6 +222,42 @@ function p.renderSmtIfLegacy(ctx, result)
     return result
 end
 
+-- Prepare Persona 2 element/header labels shared by weapon affinity and restype tables.
+-- Covers P2IS/P2EP only; mutates the legacy temporary prop fields used by the adjacent render branches.
+local function setPersona2AffinityLabels(prop, gameg)
+    if prop.etype == "Fire" then
+        prop.Fi = '<span style="color:#8B668B">Fi</span>'
+    else
+        prop.Fi = "Fi"
+    end
+    if prop.etype == "Water" then
+        prop.Wt = '<span style="color:#8B668B">Wt</span>'
+    else
+        prop.Wt = "Wt"
+    end
+    if prop.etype == "Wind" then
+        prop.Wi = '<span style="color:#8B668B">Wi</span>'
+    else
+        prop.Wi = "Wi"
+    end
+    if prop.etype == "Earth" then
+        prop.Er = '<span style="color:#8B668B">Er</span>'
+    else
+        prop.Er = "Er"
+    end
+    if gameg == "p2ep" then
+        prop.name_Rn = 'title="Shot"|Sh'
+        prop.name_Hv = 'title="Attack"|Ak'
+        prop.name_El = 'title="Lightning"|Ln'
+        prop.name_Li = 'title="Holy"|Ho'
+    else
+        prop.name_Rn = 'title="Ranged"|Rn'
+        prop.name_Hv = 'title="Havoc"|Hv'
+        prop.name_El = 'title="Electricity"|El'
+        prop.name_Li = 'title="Light"|Li'
+    end
+end
+
 -- Render lower affinity/resistance sections after legacy drop and feature rows.
 -- Covers Persona 1/2 weapon affinities, SMT/DDS/PQ resistance blocks, restype tables, and SMT9 resistance levels.
 function p.renderPost(ctx, result)
@@ -231,18 +267,6 @@ function p.renderPost(ctx, result)
     local game = ctx.game
     local gameg = ctx.gameg
     local bar = ctx.bar
-
-    -- Format one legacy resistance cell using the active game's multiplier denominator.
-    -- Used by KMT/SMT/Persona/DDS/PQ resistance loops below.
-    local function resoutput(v, denominator, currentGame)
-        return formatResistance(styles, v, denominator, currentGame)
-    end
-
-    -- Format one legacy Giten resistance cell as a percentage.
-    -- Used only by restype tables that store percent-style numeric multipliers.
-    local function outputResAsPercent(v)
-        return formatResistancePercent(styles, v)
-    end
     if gameg == "p1" and (prop.onehand or prop.twohand or prop.spear or prop.axe or prop.whip or prop.thrown or prop.arrow or prop.fist or prop.handgun or prop.machinegun or prop.shotgun or prop.rifle or prop.tech or prop.rush or prop.fire or prop.ice or prop.wind or prop.earth or prop.elec or prop.nuclear or prop.blast or prop.gravity or prop.expel or prop.miracle or prop.death or prop.curse or prop.nerve or prop.hiero) then
         prop.onehand = prop.onehand or "-"
         prop.twohand = prop.twohand or "-"
@@ -324,37 +348,7 @@ function p.renderPost(ctx, result)
         prop.alm = prop.alm or "-"
         prop.nerve = prop.nerve or "-"
         prop.mind = prop.mind or "-"
-        if prop.etype == "Fire" then
-            prop.Fi = '<span style="color:#8B668B">Fi</span>'
-        else
-            prop.Fi = "Fi"
-        end
-        if prop.etype == "Water" then
-            prop.Wt = '<span style="color:#8B668B">Wt</span>'
-        else
-            prop.Wt = "Wt"
-        end
-        if prop.etype == "Wind" then
-            prop.Wi = '<span style="color:#8B668B">Wi</span>'
-        else
-            prop.Wi = "Wi"
-        end
-        if prop.etype == "Earth" then
-            prop.Er = '<span style="color:#8B668B">Er</span>'
-        else
-            prop.Er = "Er"
-        end
-        if gameg == "p2ep" then
-            prop.name_Rn = 'title="Shot"|Sh'
-            prop.name_Hv = 'title="Attack"|Ak'
-            prop.name_El = 'title="Lightning"|Ln'
-            prop.name_Li = 'title="Holy"|Ho'
-        else
-            prop.name_Rn = 'title="Ranged"|Rn'
-            prop.name_Hv = 'title="Havoc"|Hv'
-            prop.name_El = 'title="Electricity"|El'
-            prop.name_Li = 'title="Light"|Li'
-        end
+        setPersona2AffinityLabels(prop, gameg)
         result = result .. styles.h .. 'title="Sword"|Sw' .. styles.h .. prop.name_Rn .. styles.h .. 'title="Strike"|Sk' .. styles.h .. 'title="Thrown"|Th' .. styles.h .. prop.name_Hv .. styles.h .. 'style="background:#8E283D" title="Fire"|' .. prop.Fi .. styles.h .. 'style="background:#8E283D" title="Water"|' .. prop.Wt .. styles.h .. 'style="background:#8E283D" title="Wind"|' .. prop.Wi .. styles.h .. 'style="background:#8E283D" title="Earth"|' .. prop.Er .. styles.h .. 'title="Ice"|Ic' .. styles.h .. prop.name_El .. styles.h .. 'title="Nuclear"|Nc' .. styles.h .. prop.name_Li .. styles.h .. 'title="Dark"|Dk' .. styles.h .. 'title="Almighty"|Al' .. styles.h .. 'title="Nerve"|Nr' .. styles.h .. 'title="Mind"|Mn\n|-\n'
         result = result .. styles.statlow .. prop.sword .. styles.statlow .. prop.pierce .. styles.statlow .. prop.strike .. styles.statlow .. prop.thrown .. styles.statlow .. prop.rush .. styles.statlow .. prop.fire .. styles.statlow .. prop.water .. styles.statlow .. prop.wind .. styles.statlow .. prop.earth .. styles.statlow .. prop.ice .. styles.statlow .. prop.elec .. styles.statlow .. prop.nuclear .. styles.statlow .. prop.expel .. styles.statlow .. prop.dark .. styles.statlow .. prop.alm .. styles.statlow .. prop.nerve .. styles.statlow .. prop.mind .. "\n|}"
     end
@@ -411,37 +405,7 @@ function p.renderPost(ctx, result)
         elseif game == "p1" then
             result = result .. styles.table2 .. '\n!style="background:#a9a9a9" title="Weapons" colspan="8"|\n!title="Firearms" style="background:#898989" colspan="4"|\n!style="background:#a9a9a9" title="Havoc" colspan="2"|\n|-' .. styles.h .. 'title="Weapons"|<abbr title="1-handed Sword">1h</abbr>' .. styles.h .. 'title="Weapons"|<abbr title="2-handed Sword">2h</abbr>' .. styles.h .. 'title="Weapons"|<abbr title="Spear">Sp</abbr>' .. styles.h .. 'title="Weapons"|<abbr title="Axe">Ax</abbr>' .. styles.h .. 'title="Weapons"|<abbr title="Whip">Wp</abbr>' .. styles.h .. 'title="Weapons"|<abbr title="Thrown">Th</abbr>' .. styles.h .. 'title="Weapons"|<abbr title="Arrows">Ar</abbr>' .. styles.h .. 'title="Weapons"|<abbr title="Fist">Fs</abbr>' .. styles.h .. 'title="Firearms" style="background:#898989;width:7.12%"|<abbr title="Handgun">HG</abbr>' .. styles.h .. 'title="Firearms" style="background:#898989;width:7.12%"|<abbr title="Machinegun">MG</abbr>' .. styles.h .. 'title="Firearms" style="background:#898989;width:7.12%"|<abbr title="Shotgun">SG</abbr>' .. styles.h .. 'title="Firearms" style="background:#898989;width:7.12%"|<abbr title="Rifle">Ri</abbr>' .. styles.h .. 'title="Havoc"|<abbr title="Tech">Te</abbr>' .. styles.h .. 'title="Havoc"|<abbr title="Rush">Ru</abbr>\n|-'
         elseif game == "p2is" or game == "p2ep" then
-            if prop.etype == "Fire" then
-                prop.Fi = '<span style="color:#8B668B">Fi</span>'
-            else
-                prop.Fi = "Fi"
-            end
-            if prop.etype == "Water" then
-                prop.Wt = '<span style="color:#8B668B">Wt</span>'
-            else
-                prop.Wt = "Wt"
-            end
-            if prop.etype == "Wind" then
-                prop.Wi = '<span style="color:#8B668B">Wi</span>'
-            else
-                prop.Wi = "Wi"
-            end
-            if prop.etype == "Earth" then
-                prop.Er = '<span style="color:#8B668B">Er</span>'
-            else
-                prop.Er = "Er"
-            end
-            if gameg == "p2ep" then
-                prop.name_Rn = 'title="Shot"|Sh'
-                prop.name_Hv = 'title="Attack"|Ak'
-                prop.name_El = 'title="Lightning"|Ln'
-                prop.name_Li = 'title="Holy"|Ho'
-            else
-                prop.name_Rn = 'title="Ranged"|Rn'
-                prop.name_Hv = 'title="Havoc"|Hv'
-                prop.name_El = 'title="Electricity"|El'
-                prop.name_Li = 'title="Light"|Li'
-            end
+            setPersona2AffinityLabels(prop, gameg)
             result = result .. styles.table2 .. styles.h .. 'title="Sword"|Sw' .. styles.h .. prop.name_Rn .. styles.h .. 'title="Strike"|Sk' .. styles.h .. 'title="Thrown"|Th' .. styles.h .. prop.name_Hv .. styles.h .. 'style="background:#8E283D" title="Fire"|' .. prop.Fi .. styles.h .. 'style="background:#8E283D" title="Water"|' .. prop.Wt .. styles.h .. 'style="background:#8E283D" title="Wind"|' .. prop.Wi .. styles.h .. 'style="background:#8E283D" title="Earth"|' .. prop.Er .. styles.h .. 'title="Ice"|Ic' .. styles.h .. prop.name_El .. styles.h .. 'title="Nuclear"|Nc' .. styles.h .. prop.name_Li .. styles.h .. 'title="Dark"|Dk' .. styles.h .. 'title="Almighty"|Al' .. styles.h .. 'title="Nerve"|Nr' .. styles.h .. 'title="Mind"|Mn\n|-'
         end
         local restypes = require("Module:Skills/" .. gameg .. "/res").restypes
@@ -452,13 +416,13 @@ function p.renderPost(ctx, result)
             for i, v in ipairs(restype) do
                 if game == "p1" then
                     if i > 14 then break end
-                    result = result .. resoutput(v, 4, gameg)
+                    result = result .. formatResistance(styles, v, 4, gameg)
                 elseif game == "p2is" or game == "p2ep" then
-                    result = result .. resoutput(v, 4, gameg)
+                    result = result .. formatResistance(styles, v, 4, gameg)
                 elseif game == "giten" or game == "gmt" then
-                    result = result .. outputResAsPercent(v)
+                    result = result .. formatResistancePercent(styles, v)
                 else
-                    result = result .. resoutput(v, 8, gameg)
+                    result = result .. formatResistance(styles, v, 8, gameg)
                 end
             end
         end
@@ -468,7 +432,7 @@ function p.renderPost(ctx, result)
             for i, v in ipairs(restype) do
                 if i < 15 then
                 else
-                    result = result .. resoutput(v, 4, gameg)
+                    result = result .. formatResistance(styles, v, 4, gameg)
                 end
             end
             result = result .. "\n|}"
