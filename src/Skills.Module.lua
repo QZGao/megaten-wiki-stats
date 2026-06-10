@@ -6,6 +6,34 @@ local Render = require("Module:Skills/Render")
 local p = {}
 local isArticleNamespace
 
+local game_aliases = {
+    mt = "mt1",
+    kmt = "kmt1",
+    smt = "smt1",
+    smtii = "smt2",
+    ["if"] = "smtif",
+    ["if..."] = "smtif",
+    smtn = "smt3",
+    smt3n = "smt3",
+    smtiv = "smt4",
+    imagine = "smtim",
+    smti = "smtim",
+    gmt = "giten",
+    lb = "lb1",
+    majin = "majin1",
+    mjt = "majin1",
+    majin2sn = "majin2",
+    mt2sn = "majin2",
+    dssh = "sh",
+    dsrksa = "raidou1",
+    dsrkka = "raidou2",
+    desu = "desu1",
+    smtdesur = "desu1",
+    desur = "desu1",
+    smtdesur2 = "desu2",
+    desur2 = "desu2",
+}
+
 local property_names = require("Module:Property_names")
 local property_defaults = {}
 local property_alias_index = {}
@@ -504,23 +532,7 @@ p.stats = makeInvokeFunction("_stats")
 function p._stats(args)
     local game = args[1] or args.game or args.Game or ""
     game = game:lower()
-    if game == "mt" then game = "mt1" end
-    if game == "kmt" then game = "kmt1" end
-    if game == "smt" then game = "smt1" end
-    if game == "smtii" then game = "smt2" end
-    if game == "if" or game == "if..." then game = "smtif" end
-    if game == "smtn" or game == "smt3n" then game = "smt3" end
-    if game == "smtiv" then game = "smt4" end
-    if game == "imagine" or game == "smti" then game = "smtim" end
-    if game == "gmt" or game == "smti" then game = "giten" end
-    if game == "lb" then game = "lb1" end
-    if game == "majin" or game == "mjt" then game = "majin1" end
-    if game == "majin2sn" or game == "mt2sn" then game = "majin2" end
-    if game == "dssh" then game = "sh" end
-    if game == "dsrksa" then game = "raidou1" end
-    if game == "dsrkka" then game = "raidou2" end
-    if game == "desu" or game == "smtdesur" or game == "desur" then game = "desu1" end
-    if game == "smtdesur2" or game == "desur2" then game = "desu2" end
+    game = game_aliases[game] or game
     if args.HazamaCh then game = "smtifhc" end
     if args.FES then game = "p3f" end
     if args.P3P then game = "p3p" end
