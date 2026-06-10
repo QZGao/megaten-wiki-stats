@@ -996,9 +996,26 @@ local function renderComboAttacks(ctx, result)
     result = result .. styles.skill .. "Combo Attack" .. styles.skillc .. "Button Input" .. styles.skill3 .. '" colspan=2|Skills'
     for _, v1 in eachLine(prop.cskills) do
         skillcell = ""
-        local comboParts = mw.text.split(v1, "\\")
-        local v_cnt = #comboParts - 1
-        for k2, v2 in ipairs(comboParts) do
+        local v_cnt = 0
+        local partStart = 1
+        while true do
+            local slash = string.find(v1, "\\", partStart, true)
+            if not slash then break end
+            v_cnt = v_cnt + 1
+            partStart = slash + 1
+        end
+
+        partStart = 1
+        local k2 = 1
+        while true do
+            local slash = string.find(v1, "\\", partStart, true)
+            local v2
+            if slash then
+                v2 = string.sub(v1, partStart, slash - 1)
+                partStart = slash + 1
+            else
+                v2 = string.sub(v1, partStart)
+            end
             if k2 > 1 then
                 v2, skill = resolveSkill(data, v2)
                 local resv2, resdec
@@ -1037,6 +1054,8 @@ local function renderComboAttacks(ctx, result)
                 local ca = data.cattacks[v2]
                 result = result .. styles.skill2 .. 'rowspan="' .. v_cnt .. '"|' .. v2 .. styles.cost3 .. 'rowspan="' .. v_cnt .. '"|' .. wikitext(ca.buttons)
             end
+            if not slash then break end
+            k2 = k2 + 1
         end
         result = result .. skillcell
     end
