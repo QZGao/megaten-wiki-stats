@@ -15,6 +15,22 @@ local smt4_skilltypes = {
     ["support"] = "[[File:SupportIcon_SMTIV.png|alt=Support|Support|link=Support Skills]] Support",
 }
 
+-- Return the first two backslash-separated fields used by SMT4/SMT5 specialty rows.
+-- Missing modifiers intentionally become empty strings to match the legacy `v1 .. "\\"` split behavior.
+local function splitSpecialtyPair(text)
+    local firstSlash = string.find(text, "\\", 1, true)
+    if not firstSlash then
+        return text, ""
+    end
+
+    local secondSlash = string.find(text, "\\", firstSlash + 1, true)
+    if not secondSlash then
+        return string.sub(text, 1, firstSlash - 1), string.sub(text, firstSlash + 1)
+    end
+
+    return string.sub(text, 1, firstSlash - 1), string.sub(text, firstSlash + 1, secondSlash - 1)
+end
+
 -- Render top stat/header sections inside the image-span table.
 -- Covers main stat layouts for MT/KMT/SMT, Persona, Devil Summoner, Devil Survivor, Last Bible, DemiKids, DDS, PQ, Metaphor, and related games.
 function p.renderTop(ctx, result)
@@ -223,22 +239,16 @@ function p.renderTop(ctx, result)
             result = result .. styles.table2 .. styles.h .. 'width=100px|[[Skill Affinities|<span style="color:#000">Skill Affinities</span>]]' .. styles.order
             prop.specialty = mw.text.split(prop.specialty, "\n")
             for k1, v1 in ipairs(prop.specialty) do
-                for k2, v2 in ipairs(mw.text.split(v1 .. "\\", "\\")) do
-                    if k2 > 2 then
-                        break
-                    elseif k2 % 2 == 1 then -- skill type
-                        result = result .. '<span style="white-space:nowrap">' .. smt4_skilltypes[v2:lower()]
-                    elseif k2 % 2 == 0 then -- modifier
-                        if string.sub(v2, 1, 1) == "+" then
-                            result = result .. ' <span style="color:#5f5">' .. v2 .. "</span></span>"
-                        else
-                            result = result .. ' <span style="color:#f55">' .. v2 .. "</span></span>"
-                        end
-                        if next(prop.specialty, k1) then -- add dot separator if it's not the last entry
-                            result = result .. " · "
-                            if k1 == 6 then result = result .. "<br/>" end
-                        end
-                    end
+                local skilltype, modifier = splitSpecialtyPair(v1)
+                result = result .. '<span style="white-space:nowrap">' .. smt4_skilltypes[skilltype:lower()]
+                if string.sub(modifier, 1, 1) == "+" then
+                    result = result .. ' <span style="color:#5f5">' .. modifier .. "</span></span>"
+                else
+                    result = result .. ' <span style="color:#f55">' .. modifier .. "</span></span>"
+                end
+                if next(prop.specialty, k1) then -- add dot separator if it's not the last entry
+                    result = result .. " · "
+                    if k1 == 6 then result = result .. "<br/>" end
                 end
             end
             result = result .. "\n|}"
@@ -300,18 +310,13 @@ function p.renderTop(ctx, result)
             }
             local restemp
             for k1, v1 in ipairs(prop.specialty) do
-                for k2, v2 in ipairs(mw.text.split(v1 .. "\\", "\\")) do
-                    if k2 > 2 then
-                        break
-                    elseif k2 % 2 == 1 then -- skill type
-                        restemp = v2:lower()
-                    elseif k2 % 2 == 0 then -- modifier
-                        if string.sub(v2, 1, 1) == "+" then
-                            prop.skilltypes[restemp] = ' <span style="color:#5f5">' .. v2 .. "</span></span>"
-                        else
-                            prop.skilltypes[restemp] = ' <span style="color:#f55">' .. v2 .. "</span></span>"
-                        end
-                    end
+                local modifier
+                restemp, modifier = splitSpecialtyPair(v1)
+                restemp = restemp:lower()
+                if string.sub(modifier, 1, 1) == "+" then
+                    prop.skilltypes[restemp] = ' <span style="color:#5f5">' .. modifier .. "</span></span>"
+                else
+                    prop.skilltypes[restemp] = ' <span style="color:#f55">' .. modifier .. "</span></span>"
                 end
             end
             result = result .. styles.table2 .. styles.cost3 .. 'width=10% title="Physical"|[[File:PhysIcon_SMTV.png|24px|alt=Physical|Physical|link=Physical Skills]]<br>[[Physical Skills|<span style="color:white">Phys</span>]]' .. styles.cost3 .. 'width=9% title="Fire"|[[File:FireIcon_SMTV.png|24px|alt=Fire|Fire|link=Fire Skills]]<br>[[Fire Skills|<span style="color:white">Fire</span>]]' .. styles.cost3 .. 'width=9% title="Ice"|[[File:IceIcon_SMTV.png|24px|alt=Ice|Ice|link=Ice Skills]] <br>[[Ice Skills|<span style="color:white">Ice</span>]]' .. styles.cost3 .. 'width=9% title="Electricity"|[[File:ElecIcon_SMTV.png|24px|alt=Electricity|Electricity|link=Electric Skills]]<br>[[Electric Skills|<span style="color:white">Elec</span>]]' .. styles.cost3 .. 'width=9% title="Force"|[[File:ForceIcon_SMTV.png|24px|alt=Force|Force|link=Force Skills]]<br>[[Force Skills|<span style="color:white">Force</span>]]' .. styles.cost3 .. 'width=9% title="Light"|[[File:LightIcon_SMTV.png|24px|alt=Light|Light|link=Light Skills (Affinity)]]<br>[[Light Skills (Affinity)|<span style="color:white">Light</span>]]' .. styles.cost3 .. 'width=9% title="Dark"|[[File:DarkIcon_SMTV.png|24px|alt=Dark|Dark|link=Dark Skills (Affinity)]]<br>[[Dark Skills (Affinity)|<span style="color:white">Dark</span>]]' .. styles.cost3 .. 'width=9% title="Almighty"|[[File:AlmightyIcon_SMTV.png|24px|alt=Almighty|Almighty|link=Almighty Skills]]<br>[[Almighty Skills|<span style="color:white">Almi.</span>]]' .. styles.cost3 .. 'width=9% title="Ailment"|[[File:AilmentIcon_SMTV.png|24px|alt=Ailment|Ailment|link=Ailment Skills]]<br>[[Ailment Skills|<span style="color:white">Ailm.</span>]]' .. styles.cost3 .. 'width=9% title="Healing"|[[File:HealIcon_SMTV.png|24px|alt=Healing|Healing|link=Healing Skills]]<br>[[Healing Skills|<span style="color:white">Heal.</span>]]' .. styles.cost3 .. 'width=9% title="Support"|[[File:SupportIcon_SMTV.png|24px|alt=Support|Support|link=Support Skills]]<br>[[Support Skills|<span style="color:white">Supp.</span>]]\n|-\n' .. styles.cost3 .. "width=9%|" .. prop.skilltypes["phys"] .. styles.cost3 .. "width=9%|" .. prop.skilltypes["fire"] .. styles.cost3 .. "width=9%|" .. prop.skilltypes["ice"] .. styles.cost3 .. "width=9%|" .. prop.skilltypes["elec"] .. styles.cost3 .. "width=9%|" .. prop.skilltypes["force"] .. styles.cost3 .. "width=9%|" .. prop.skilltypes["light"] .. styles.cost3 .. "width=9%|" .. prop.skilltypes["dark"] .. styles.cost3 .. "width=9%|" .. prop.skilltypes["almighty"] .. styles.cost3 .. "width=9%|" .. prop.skilltypes["ailment"] .. styles.cost3 .. "width=9%|" .. prop.skilltypes["heal"] .. styles.cost3 .. "width=9%|" .. prop.skilltypes["support"] .. "\n|}" .. "\n|}"

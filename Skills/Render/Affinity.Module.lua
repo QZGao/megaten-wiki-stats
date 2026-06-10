@@ -71,6 +71,22 @@ local function formatResistancePercent(styles, v)
     return styles.statlow3 .. v
 end
 
+-- Return the first two backslash-separated fields used by SMT9 resistance-level rows.
+-- Missing modifiers intentionally become empty strings to match the legacy `v1 .. "\\"` split behavior.
+local function splitReslevelPair(text)
+    local firstSlash = string.find(text, "\\", 1, true)
+    if not firstSlash then
+        return text, ""
+    end
+
+    local secondSlash = string.find(text, "\\", firstSlash + 1, true)
+    if not secondSlash then
+        return string.sub(text, 1, firstSlash - 1), string.sub(text, firstSlash + 1)
+    end
+
+    return string.sub(text, 1, firstSlash - 1), string.sub(text, firstSlash + 1, secondSlash - 1)
+end
+
 -- Render top affinity tables that may merge beside pending Persona/P5X stat rows.
 -- Covers Strange Journey, Devil Survivor, Ronde, Persona 3-5, P5X, and Metaphor top affinity layouts.
 function p.renderTop(ctx, result)
@@ -481,24 +497,19 @@ function p.renderPost(ctx, result)
         }
         local resleveltemp
         for k1, v1 in ipairs(prop.reslevels) do
-            for k2, v2 in ipairs(mw.text.split(v1 .. "\\", "\\")) do
-                if k2 > 2 then
-                    break
-                elseif k2 % 2 == 1 then
-                    resleveltemp = v2:lower()
-                elseif k2 % 2 == 0 then --modifier
-                    if string.sub(v2, 1, 1) == "+" then
-                        if string.find(v2, "rf") then
-                            prop.resleveltypes[resleveltemp] = ' <span style="color:#5ff">' .. v2 .. "</span></span>"
-                        elseif string.find(v2, "dr") then
-                            prop.resleveltypes[resleveltemp] = ' <span style="color:#f5f">' .. v2 .. "</span></span>"
-                        else
-                            prop.resleveltypes[resleveltemp] = ' <span style="color:#5f5">' .. v2 .. "</span></span>"
-                        end
-                    else
-                        prop.resleveltypes[resleveltemp] = ' <span style="color:#f55">' .. v2 .. "</span></span>"
-                    end
+            local modifier
+            resleveltemp, modifier = splitReslevelPair(v1)
+            resleveltemp = resleveltemp:lower()
+            if string.sub(modifier, 1, 1) == "+" then
+                if string.find(modifier, "rf") then
+                    prop.resleveltypes[resleveltemp] = ' <span style="color:#5ff">' .. modifier .. "</span></span>"
+                elseif string.find(modifier, "dr") then
+                    prop.resleveltypes[resleveltemp] = ' <span style="color:#f5f">' .. modifier .. "</span></span>"
+                else
+                    prop.resleveltypes[resleveltemp] = ' <span style="color:#5f5">' .. modifier .. "</span></span>"
                 end
+            else
+                prop.resleveltypes[resleveltemp] = ' <span style="color:#f55">' .. modifier .. "</span></span>"
             end
         end
         result = result .. styles.table2 .. styles.h .. 'title="Strike"|St' .. styles.h .. 'title="Slash"|Sl' .. styles.h .. 'title="Tech"|Te' .. styles.h .. 'title="Gun"|Gu' .. styles.h .. 'title="Thrown"|Th' .. styles.h .. 'title="Fire"|Fi' .. styles.h .. 'title="Ice"|Ic' .. styles.h .. 'title="Electricity"|El' .. styles.h .. 'title="Force"|Fo' .. styles.h .. 'title="Expel"|Ex' .. styles.h .. 'title="Death"|De' .. styles.h .. 'title="Mind"|Mi' .. styles.h .. 'title="Nerve"|Ne' .. styles.h .. 'title="Almighty"|Al' .. styles.h .. 'title="Healing|He\n|-' .. styles.statlow3 .. '"|' .. prop.resleveltypes.strike .. styles.statlow3 .. '"|' .. prop.resleveltypes.slash .. styles.statlow3 .. '"|' .. prop.resleveltypes.tech .. styles.statlow3 .. '"|' .. prop.resleveltypes.gun .. styles.statlow3 .. '"|' .. prop.resleveltypes.thrown .. styles.statlow3 .. '"|' .. prop.resleveltypes.fire .. styles.statlow3 .. '"|' .. prop.resleveltypes.ice .. styles.statlow3 .. '"|' .. prop.resleveltypes.elec .. styles.statlow3 .. '"|' .. prop.resleveltypes.force .. styles.statlow3 .. '"|' .. prop.resleveltypes.expel .. styles.statlow3 .. '"|' .. prop.resleveltypes.death .. styles.statlow3 .. '"|' .. prop.resleveltypes.mind .. styles.statlow3 .. '"|' .. prop.resleveltypes.nerve .. styles.statlow3 .. '"|' .. prop.resleveltypes.almighty .. styles.statlow3 .. '"|' .. prop.resleveltypes.heal

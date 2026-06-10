@@ -6,6 +6,22 @@ local SkillTable = require("Module:Skills/Render/SkillTable")
 
 local p = {}
 
+-- Return the name and optional type for Persona 3 Reload Theurgy characteristic rows.
+-- Missing type stays nil so the badge is omitted, matching the legacy single-field behavior.
+local function splitTheurgyTrait(text)
+    local firstSlash = string.find(text, "\\", 1, true)
+    if not firstSlash then
+        return text, nil
+    end
+
+    local secondSlash = string.find(text, "\\", firstSlash + 1, true)
+    if not secondSlash then
+        return string.sub(text, 1, firstSlash - 1), string.sub(text, firstSlash + 1)
+    end
+
+    return string.sub(text, 1, firstSlash - 1), string.sub(text, firstSlash + 1, secondSlash - 1)
+end
+
 -- Flush a queued top stat table when no matching top affinity table consumed it.
 -- Used for Persona/P5X layouts where stat rows may merge horizontally with affinity rows.
 local function flushPendingTopStats(ctx, result)
@@ -93,14 +109,7 @@ function p.render(ctx)
             result = result .. styles.h .. 'width=100px rowspan="' .. #traitRows .. '"|[[Theurgy|' .. styles.spanc .. "Characteristics</span>]]" .. styles.order
             for k, v in ipairs(traitRows) do
                 if k > 1 then result = result .. styles.order2 end
-                local traitLine = mw.text.split(v, "\\"), traitName, traitType
-                if #traitLine > 1 then
-                    traitName = traitLine[1]
-                    traitType = traitLine[2]
-                else
-                    traitName = v
-                    traitType = nil
-                end
+                local traitName, traitType = splitTheurgyTrait(v)
                 local traitEffect = data.theurgies[traitName]
 
                 if not traitEffect then
@@ -114,14 +123,7 @@ function p.render(ctx)
         else
             result = result .. styles.table2
             result = result .. styles.h .. "width=100px|[[Theurgy|" .. styles.spanc .. "Characteristics</span>]]" .. styles.order
-            local traitLine = mw.text.split(prop.ptraits, "\\"), traitName, traitType
-            if #traitLine > 1 then
-                traitName = traitLine[1]
-                traitType = traitLine[2]
-            else
-                traitName = prop.ptraits
-                traitType = nil
-            end
+            local traitName, traitType = splitTheurgyTrait(prop.ptraits)
             local traitEffect = data.theurgies[traitName]
 
             if not traitEffect then
@@ -136,10 +138,27 @@ function p.render(ctx)
     result = Drops.renderPersona4Rewards(ctx, result)
     if gameg == "p5r" and prop.ptraits then
         if string.find(prop.ptraits, "\\") then
-            local traitRows = mw.text.split(prop.ptraits, "\\")
+            local traitRowCount = 1
+            local traitStart = 1
+            while true do
+                local traitSlash = string.find(prop.ptraits, "\\", traitStart, true)
+                if not traitSlash then break end
+                traitRowCount = traitRowCount + 1
+                traitStart = traitSlash + 1
+            end
+
             result = result .. styles.table2
-            result = result .. styles.h .. 'width=100px rowspan="' .. #traitRows .. '"|[[Persona Traits|' .. styles.spanc .. "Persona Trait</span>]]" .. styles.order
-            for k, v in ipairs(traitRows) do
+            result = result .. styles.h .. 'width=100px rowspan="' .. traitRowCount .. '"|[[Persona Traits|' .. styles.spanc .. "Persona Trait</span>]]" .. styles.order
+            traitStart = 1
+            for k = 1, traitRowCount do
+                local traitSlash = string.find(prop.ptraits, "\\", traitStart, true)
+                local v
+                if traitSlash then
+                    v = string.sub(prop.ptraits, traitStart, traitSlash - 1)
+                    traitStart = traitSlash + 1
+                else
+                    v = string.sub(prop.ptraits, traitStart)
+                end
                 if k > 1 then result = result .. styles.order2 end
                 local ptrait = data.traits[v]
                 if not ptrait then
