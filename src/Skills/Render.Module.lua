@@ -159,10 +159,27 @@ function p.render(ctx)
     end
     if gameg == "p3re" and prop.ptraits then
         if string.find(prop.ptraits, "\n") then
-            local traitRows = mw.text.split(prop.ptraits, "\n")
+            local traitRowCount = 1
+            local traitStart = 1
+            while true do
+                local traitNewline = string.find(prop.ptraits, "\n", traitStart, true)
+                if not traitNewline then break end
+                traitRowCount = traitRowCount + 1
+                traitStart = traitNewline + 1
+            end
+
             result = result .. styles.table2
-            result = result .. styles.h .. 'width=100px rowspan="' .. #traitRows .. '"|[[Theurgy|' .. styles.spanc .. "Characteristics</span>]]" .. styles.order
-            for k, v in ipairs(traitRows) do
+            result = result .. styles.h .. 'width=100px rowspan="' .. traitRowCount .. '"|[[Theurgy|' .. styles.spanc .. "Characteristics</span>]]" .. styles.order
+            traitStart = 1
+            for k = 1, traitRowCount do
+                local traitNewline = string.find(prop.ptraits, "\n", traitStart, true)
+                local v
+                if traitNewline then
+                    v = string.sub(prop.ptraits, traitStart, traitNewline - 1)
+                    traitStart = traitNewline + 1
+                else
+                    v = string.sub(prop.ptraits, traitStart)
+                end
                 if k > 1 then result = result .. styles.order2 end
                 local traitName, traitType = splitTheurgyTrait(v)
                 local traitEffect = data.theurgies[traitName]
