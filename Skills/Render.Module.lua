@@ -38,6 +38,44 @@ local function splitTheurgyTrait(text)
     return string.sub(text, 1, firstSlash - 1), string.sub(text, firstSlash + 1, secondSlash - 1)
 end
 
+-- SMT3 recruit/obtain labels keyed by normalized template input.
+-- Used only by the coordinator's SMT3 post-affinity block; unknown inputs remain lowercased like the legacy elseif chain.
+local smt3RecruitText = {
+    yes = '<abbr title="Can be recruited in normal battle or obtained from conventional fusion.">Normal recruit or fusion</abbr>',
+    ["dark recruit"] = '<abbr title="Can be obtained via conventional fusion or recruited in normal battle under Full Kagutsuchi with fair chance.">[[Moon Phase System#Shin Megami Tensei III: Nocturne|Full Kagutsuchi]] recruitment or [[fusion]]</abbr>',
+    dark = '<abbr title="Can only be obtained via fusion. Open to non-recruitment conversation in normal battle.">[[Fusion]] only. Open to trading.</abbr>',
+    fusion = '<abbr title="Can only be obtained via conventional fusion.">[[Fusion]] only</abbr>',
+    special = '<abbr title="Can only be obtained via special fusion.">[[Special fusion#Shin Megami Tensei III: Nocturne|Special fusion]] only</abbr>',
+    evolve = '<abbr title="Can only be obtained via evolution from another demon.">[[Evolution#Shin Megami Tensei III: Nocturne|Evolution]] only</abbr>',
+    ["evolve neutral"] = '<abbr title="Can be recruited in normal battle or obtained via evolution from another demon. Cannot be created via fusion.">Normal recruit or [[Evolution#Shin Megami Tensei III: Nocturne|evolution]]</abbr>',
+    ["evolve dark"] = '<abbr title="Can only be obtained via evolution from another demon. Cannot be created via fusion. Open to non-recruitment conversation in normal battle.">[[Evolution#Shin Megami Tensei III: Nocturne|Evolution]] only. Open to trading.</abbr>',
+    ["boss fusion"] = '<abbr title="Can only be obtained via fusion after defeating it in boss battle.">[[Fusion]] only after boss battle</abbr>',
+    ["boss special"] = '<abbr title="Can only be obtained via special fusion after defeating it in boss battle.">[[Special fusion#Shin Megami Tensei III: Nocturne|Special fusion]] only after boss battle</abbr>',
+    ["boss evolve"] = '<abbr title="Can only be obtained via evolution after defeating it in battle.">[[evolution#Shin Megami Tensei III: Nocturne|Evolution]] only after boss battle</abbr>',
+    ["dark boss fusion"] = '<abbr title="Can only be obtained via fusion after defeating it in boss battle. Open to non-recruitment conversation in normal battle.">[[Fusion]] only after boss battle. Open to trading.</abbr>',
+    ["dark boss special fusion"] = '<abbr title="Can only be obtained via special fusion after defeating it in boss battle. Open to non-recruitment conversation in normal battle.">[[Special fusion#Shin Megami Tensei III: Nocturne|Special fusion]] only after boss battle. Open to trading.</abbr>',
+    ["dark boss evolve"] = '<abbr title="Can only be obtained via evolution after defeating it in battle. Open to non-recruitment conversation in normal battle.">[[evolution#Shin Megami Tensei III: Nocturne|Evolution]] only after boss battle. Open to trading.</abbr>',
+    samael = '<abbr title="Can only be obtained via special fusion after defeating it in boss battle or choosing Shijima Reason after meeting with Ahriman in Kagutsuchi Tower.">Choose Shijima Reason or perform [[Special fusion#Shin Megami Tensei III: Nocturne|special fusion]] only after boss battle.</abbr>',
+    thor = '<abbr title="Can only be obtained via fusion after defeating him at Tower of Kagutsuchi.">[[Fusion]] only after boss battle at [[Tower of Kagutsuchi]]</abbr>',
+    bishamon = '<abbr title="Can only be obtained via fusion after defeating him at Bandou Shrine.">[[Fusion]] only after boss battle at [[Bandou Shrine]]</abbr>',
+    futomimi = "[[Fusion]] only after boss battle and completing the revival side quest.",
+    raidou = '<abbr title="Can only be recruited in story plot.">Plot related</abbr>',
+    unique = "Enemy only",
+}
+smt3RecruitText.recruit = smt3RecruitText.yes
+smt3RecruitText["special fusion"] = smt3RecruitText.special
+smt3RecruitText.evolution = smt3RecruitText.evolve
+smt3RecruitText["neutral evolution"] = smt3RecruitText["evolve neutral"]
+smt3RecruitText["dark evolution"] = smt3RecruitText["evolve dark"]
+smt3RecruitText["boss special fusion"] = smt3RecruitText["boss special"]
+smt3RecruitText["boss evolution"] = smt3RecruitText["boss evolve"]
+smt3RecruitText.sakahagi = smt3RecruitText.futomimi
+smt3RecruitText.dante = smt3RecruitText.raidou
+smt3RecruitText.exclusive = smt3RecruitText.unique
+smt3RecruitText.enemy = smt3RecruitText.unique
+smt3RecruitText["enemy only"] = smt3RecruitText.unique
+smt3RecruitText["enemy exclusive"] = smt3RecruitText.unique
+
 -- Flush a queued top stat table when no matching top affinity table consumed it.
 -- Used for Persona/P5X layouts where stat rows may merge horizontally with affinity rows.
 local function flushPendingTopStats(ctx, result)
@@ -218,47 +256,7 @@ function p.render(ctx)
     result = Drops.renderPersona2Summon(ctx, result)
     if gameg == "smt3" and (prop.recruit ~= "" or prop.obtain ~= "" or prop.evolvef or prop.evolvet) then
         prop.recruit = prop.recruit:lower()
-        if prop.recruit == "yes" or prop.recruit == "recruit" then
-            prop.recruit = '<abbr title="Can be recruited in normal battle or obtained from conventional fusion.">Normal recruit or fusion</abbr>'
-        elseif prop.recruit == "dark recruit" then
-            prop.recruit = '<abbr title="Can be obtained via conventional fusion or recruited in normal battle under Full Kagutsuchi with fair chance.">[[Moon Phase System#Shin Megami Tensei III: Nocturne|Full Kagutsuchi]] recruitment or [[fusion]]</abbr>'
-        elseif prop.recruit == "dark" then
-            prop.recruit = '<abbr title="Can only be obtained via fusion. Open to non-recruitment conversation in normal battle.">[[Fusion]] only. Open to trading.</abbr>'
-        elseif prop.recruit == "fusion" then
-            prop.recruit = '<abbr title="Can only be obtained via conventional fusion.">[[Fusion]] only</abbr>'
-        elseif prop.recruit == "special" or prop.recruit == "special fusion" then
-            prop.recruit = '<abbr title="Can only be obtained via special fusion.">[[Special fusion#Shin Megami Tensei III: Nocturne|Special fusion]] only</abbr>'
-        elseif prop.recruit == "evolve" or prop.recruit == "evolution" then
-            prop.recruit = '<abbr title="Can only be obtained via evolution from another demon.">[[Evolution#Shin Megami Tensei III: Nocturne|Evolution]] only</abbr>'
-        elseif prop.recruit == "evolve neutral" or prop.recruit == "neutral evolution" then
-            prop.recruit = '<abbr title="Can be recruited in normal battle or obtained via evolution from another demon. Cannot be created via fusion.">Normal recruit or [[Evolution#Shin Megami Tensei III: Nocturne|evolution]]</abbr>'
-        elseif prop.recruit == "evolve dark" or prop.recruit == "dark evolution" then
-            prop.recruit = '<abbr title="Can only be obtained via evolution from another demon. Cannot be created via fusion. Open to non-recruitment conversation in normal battle.">[[Evolution#Shin Megami Tensei III: Nocturne|Evolution]] only. Open to trading.</abbr>'
-        elseif prop.recruit == "boss fusion" then
-            prop.recruit = '<abbr title="Can only be obtained via fusion after defeating it in boss battle.">[[Fusion]] only after boss battle</abbr>'
-        elseif prop.recruit == "boss special" or prop.recruit == "boss special fusion" then
-            prop.recruit = '<abbr title="Can only be obtained via special fusion after defeating it in boss battle.">[[Special fusion#Shin Megami Tensei III: Nocturne|Special fusion]] only after boss battle</abbr>'
-        elseif prop.recruit == "boss evolve" or prop.recruit == "boss evolution" then
-            prop.recruit = '<abbr title="Can only be obtained via evolution after defeating it in battle.">[[evolution#Shin Megami Tensei III: Nocturne|Evolution]] only after boss battle</abbr>'
-        elseif prop.recruit == "dark boss fusion" then
-            prop.recruit = '<abbr title="Can only be obtained via fusion after defeating it in boss battle. Open to non-recruitment conversation in normal battle.">[[Fusion]] only after boss battle. Open to trading.</abbr>'
-        elseif prop.recruit == "dark boss special fusion" then
-            prop.recruit = '<abbr title="Can only be obtained via special fusion after defeating it in boss battle. Open to non-recruitment conversation in normal battle.">[[Special fusion#Shin Megami Tensei III: Nocturne|Special fusion]] only after boss battle. Open to trading.</abbr>'
-        elseif prop.recruit == "dark boss evolve" then
-            prop.recruit = '<abbr title="Can only be obtained via evolution after defeating it in battle. Open to non-recruitment conversation in normal battle.">[[evolution#Shin Megami Tensei III: Nocturne|Evolution]] only after boss battle. Open to trading.</abbr>'
-        elseif prop.recruit == "samael" then
-            prop.recruit = '<abbr title="Can only be obtained via special fusion after defeating it in boss battle or choosing Shijima Reason after meeting with Ahriman in Kagutsuchi Tower.">Choose Shijima Reason or perform [[Special fusion#Shin Megami Tensei III: Nocturne|special fusion]] only after boss battle.</abbr>'
-        elseif prop.recruit == "thor" then
-            prop.recruit = '<abbr title="Can only be obtained via fusion after defeating him at Tower of Kagutsuchi.">[[Fusion]] only after boss battle at [[Tower of Kagutsuchi]]</abbr>'
-        elseif prop.recruit == "bishamon" then
-            prop.recruit = '<abbr title="Can only be obtained via fusion after defeating him at Bandou Shrine.">[[Fusion]] only after boss battle at [[Bandou Shrine]]</abbr>'
-        elseif prop.recruit == "futomimi" or prop.recruit == "sakahagi" then
-            prop.recruit = "[[Fusion]] only after boss battle and completing the revival side quest."
-        elseif prop.recruit == "raidou" or prop.recruit == "dante" then
-            prop.recruit = '<abbr title="Can only be recruited in story plot.">Plot related</abbr>'
-        elseif prop.recruit == "unique" or prop.recruit == "exclusive" or prop.recruit == "enemy" or prop.recruit == "enemy only" or prop.recruit == "enemy exclusive" then
-            prop.recruit = "Enemy only"
-        end
+        prop.recruit = smt3RecruitText[prop.recruit] or prop.recruit
         if prop.recruit or prop.obtain or prop.convo then
             result = result .. styles.table2 .. styles.h
             if prop.recruit or prop.obtain then result = result .. "width=80px|Obtainable" .. styles.order .. prop.recruit .. prop.obtain end

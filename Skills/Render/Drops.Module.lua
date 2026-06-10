@@ -6,7 +6,6 @@ function p.renderPersona3Rewards(ctx, result)
     local styles = ctx.styles
     local prop = ctx.prop
     local gameg = ctx.gameg
-    local gamegn = ctx.gamegn
     if (gameg == "p3" or gameg == "p3re") and (prop.card or prop.preturn or prop.normal) then
         result = result .. styles.table2
         if prop.card then result = result .. styles.h .. "width=100px|[[Skill Card|" .. styles.spanc .. "Skill Card</span>]]" .. styles.order .. '<abbr title="Portable only">' .. prop.card .. "</abbr>" end
@@ -26,10 +25,10 @@ function p.renderPersona4Rewards(ctx, result)
     local gamegn = ctx.gamegn
     if (gameg == "p4") and prop.hp then
         result = result .. styles.table2
-        if not prop.xp then prop.xp = "-" end
-        if not prop.yen then prop.yen = "-" end
-        if not prop.normal then prop.normal = "-" end
-        if not prop.rare then prop.rare = "-" end
+        prop.xp = prop.xp or "-"
+        prop.yen = prop.yen or "-"
+        prop.normal = prop.normal or "-"
+        prop.rare = prop.rare or "-"
         result = result .. styles.h .. "|EXP" .. styles.h .. "|Yen" .. styles.h .. "|[[List of " .. gamegn .. " Items|" .. styles.spanc .. "Normal Drop</span>]]" .. styles.h .. "|[[List of " .. gamegn .. " Items|" .. styles.spanc .. "Rare Drop</span>]]" .. "\n|-\n"
         result = result .. styles.statlow .. prop.xp .. styles.statlow .. prop.yen .. styles.statlow .. prop.normal .. styles.statlow .. prop.rare
         result = result .. "\n|}"
@@ -48,13 +47,13 @@ function p.renderPersona5Rewards(ctx, result)
         local has_drop_row = gameg ~= "p5x" or hasFilledValue(prop.xp) or hasFilledValue(prop.yen) or hasFilledValue(prop.normal) or hasFilledValue(prop.material) or hasFilledValue(prop.drop1) or hasFilledValue(prop.drop2) or hasFilledValue(prop.drop3) or hasFilledValue(prop.card) or hasFilledValue(prop.dropc)
         if has_drop_row then
             result = result .. styles.table2
-            if not prop.xp then prop.xp = "-" end
-            if not prop.yen then prop.yen = "-" end
-            if not prop.normal then prop.normal = "-" end
-            if not prop.material then prop.material = prop.normal end
-            if not prop.drop1 then prop.drop1 = "-" end
-            if not prop.card then prop.card = "-" end
-            if not prop.dropc then prop.dropc = prop.card end
+            prop.xp = prop.xp or "-"
+            prop.yen = prop.yen or "-"
+            prop.normal = prop.normal or "-"
+            prop.material = prop.material or prop.normal
+            prop.drop1 = prop.drop1 or "-"
+            prop.card = prop.card or "-"
+            prop.dropc = prop.dropc or prop.card
             local cnt_drops = 2
             if prop.drop3 then
                 cnt_drops = 4
@@ -72,9 +71,9 @@ function p.renderPersona5Rewards(ctx, result)
     end
     if (gameg == "sh2") and (prop.xp or prop.yen or prop.normal) then
         result = result .. styles.table2
-        if not prop.xp then prop.xp = "-" end
-        if not prop.yen then prop.yen = "-" end
-        if not prop.normal then prop.normal = "-" end
+        prop.xp = prop.xp or "-"
+        prop.yen = prop.yen or "-"
+        prop.normal = prop.normal or "-"
         result = result .. styles.h .. "|EXP" .. styles.h .. "|Yen" .. styles.h .. "|[[Battle Drops|" .. styles.spanc .. "Battle Drop</span>]]" .. "\n|-\n"
         result = result .. styles.statlow .. prop.xp .. styles.statlow .. prop.yen .. styles.statlow .. prop.normal
         result = result .. "\n|}"
