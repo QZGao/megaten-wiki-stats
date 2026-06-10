@@ -441,8 +441,7 @@ function p.renderPost(ctx, result)
     if game == "smt9" and prop.reslevels then
         styles.h = '\n!style="background:' .. gameData.colorbg .. ';color:#fff" '
         result = result .. styles.table2h .. '"' .. styles.h .. "colspan=4|" .. styles.spanc .. "[[Resistance Level]]s</span>"
-        prop.reslevels = mw.text.split(prop.reslevels, "\n")
-        prop.resleveltypes = {
+        local resleveltypes = {
             ["strike"] = ' <span style="color:#5f5">+1</span></span>',
             ["slash"] = ' <span style="color:#5f5">+1</span></span>',
             ["tech"] = ' <span style="color:#5f5">+1</span></span>',
@@ -460,23 +459,34 @@ function p.renderPost(ctx, result)
             ["heal"] = ' <span style="color:#5f5">+1</span></span>',
         }
         local resleveltemp
-        for k1, v1 in ipairs(prop.reslevels) do
+        local reslevelStart = 1
+        while true do
+            local reslevelNewline = string.find(prop.reslevels, "\n", reslevelStart, true)
+            local v1
+            if reslevelNewline then
+                v1 = string.sub(prop.reslevels, reslevelStart, reslevelNewline - 1)
+                reslevelStart = reslevelNewline + 1
+            else
+                v1 = string.sub(prop.reslevels, reslevelStart)
+            end
+
             local modifier
             resleveltemp, modifier = splitReslevelPair(v1)
             resleveltemp = resleveltemp:lower()
             if string.sub(modifier, 1, 1) == "+" then
                 if string.find(modifier, "rf") then
-                    prop.resleveltypes[resleveltemp] = ' <span style="color:#5ff">' .. modifier .. "</span></span>"
+                    resleveltypes[resleveltemp] = ' <span style="color:#5ff">' .. modifier .. "</span></span>"
                 elseif string.find(modifier, "dr") then
-                    prop.resleveltypes[resleveltemp] = ' <span style="color:#f5f">' .. modifier .. "</span></span>"
+                    resleveltypes[resleveltemp] = ' <span style="color:#f5f">' .. modifier .. "</span></span>"
                 else
-                    prop.resleveltypes[resleveltemp] = ' <span style="color:#5f5">' .. modifier .. "</span></span>"
+                    resleveltypes[resleveltemp] = ' <span style="color:#5f5">' .. modifier .. "</span></span>"
                 end
             else
-                prop.resleveltypes[resleveltemp] = ' <span style="color:#f55">' .. modifier .. "</span></span>"
+                resleveltypes[resleveltemp] = ' <span style="color:#f55">' .. modifier .. "</span></span>"
             end
+            if not reslevelNewline then break end
         end
-        result = result .. styles.table2 .. styles.h .. 'title="Strike"|St' .. styles.h .. 'title="Slash"|Sl' .. styles.h .. 'title="Tech"|Te' .. styles.h .. 'title="Gun"|Gu' .. styles.h .. 'title="Thrown"|Th' .. styles.h .. 'title="Fire"|Fi' .. styles.h .. 'title="Ice"|Ic' .. styles.h .. 'title="Electricity"|El' .. styles.h .. 'title="Force"|Fo' .. styles.h .. 'title="Expel"|Ex' .. styles.h .. 'title="Death"|De' .. styles.h .. 'title="Mind"|Mi' .. styles.h .. 'title="Nerve"|Ne' .. styles.h .. 'title="Almighty"|Al' .. styles.h .. 'title="Healing"|He\n|-' .. styles.statlow3 .. '"|' .. prop.resleveltypes.strike .. styles.statlow3 .. '"|' .. prop.resleveltypes.slash .. styles.statlow3 .. '"|' .. prop.resleveltypes.tech .. styles.statlow3 .. '"|' .. prop.resleveltypes.gun .. styles.statlow3 .. '"|' .. prop.resleveltypes.thrown .. styles.statlow3 .. '"|' .. prop.resleveltypes.fire .. styles.statlow3 .. '"|' .. prop.resleveltypes.ice .. styles.statlow3 .. '"|' .. prop.resleveltypes.elec .. styles.statlow3 .. '"|' .. prop.resleveltypes.force .. styles.statlow3 .. '"|' .. prop.resleveltypes.expel .. styles.statlow3 .. '"|' .. prop.resleveltypes.death .. styles.statlow3 .. '"|' .. prop.resleveltypes.mind .. styles.statlow3 .. '"|' .. prop.resleveltypes.nerve .. styles.statlow3 .. '"|' .. prop.resleveltypes.almighty .. styles.statlow3 .. '"|' .. prop.resleveltypes.heal
+        result = result .. styles.table2 .. styles.h .. 'title="Strike"|St' .. styles.h .. 'title="Slash"|Sl' .. styles.h .. 'title="Tech"|Te' .. styles.h .. 'title="Gun"|Gu' .. styles.h .. 'title="Thrown"|Th' .. styles.h .. 'title="Fire"|Fi' .. styles.h .. 'title="Ice"|Ic' .. styles.h .. 'title="Electricity"|El' .. styles.h .. 'title="Force"|Fo' .. styles.h .. 'title="Expel"|Ex' .. styles.h .. 'title="Death"|De' .. styles.h .. 'title="Mind"|Mi' .. styles.h .. 'title="Nerve"|Ne' .. styles.h .. 'title="Almighty"|Al' .. styles.h .. 'title="Healing"|He\n|-' .. styles.statlow3 .. '"|' .. resleveltypes.strike .. styles.statlow3 .. '"|' .. resleveltypes.slash .. styles.statlow3 .. '"|' .. resleveltypes.tech .. styles.statlow3 .. '"|' .. resleveltypes.gun .. styles.statlow3 .. '"|' .. resleveltypes.thrown .. styles.statlow3 .. '"|' .. resleveltypes.fire .. styles.statlow3 .. '"|' .. resleveltypes.ice .. styles.statlow3 .. '"|' .. resleveltypes.elec .. styles.statlow3 .. '"|' .. resleveltypes.force .. styles.statlow3 .. '"|' .. resleveltypes.expel .. styles.statlow3 .. '"|' .. resleveltypes.death .. styles.statlow3 .. '"|' .. resleveltypes.mind .. styles.statlow3 .. '"|' .. resleveltypes.nerve .. styles.statlow3 .. '"|' .. resleveltypes.almighty .. styles.statlow3 .. '"|' .. resleveltypes.heal
         result = result .. "\n|}" .. "\n|}"
     end
     return result
