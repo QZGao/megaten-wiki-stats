@@ -193,6 +193,7 @@ local levelLabels = {
     Gp = '<span style="color:yellow;font-weight:bold;">Protector<br>(Gacha)</span>',
     Gy = '<span style="color:#f5f;font-weight:bold;">Psychic<br>(Gacha)</span>',
     Ge = '<span style="color:#5ff;font-weight:bold;">Elementalist<br>(Gacha)</span>',
+    Su = '<span style="color:blue;font-weight:bold;">Surpass<br>(Awaken)</span>',
 }
 
 -- Convert level/archetype shorthand from the skill parameter into display text.

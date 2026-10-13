@@ -268,10 +268,10 @@ function p.render(ctx)
 
     result = Drops.renderLegacyRewards(ctx, result)
     result = Affinity.renderSmtIfLegacy(ctx, result)
-    if game == "smtim" then
-        local seealso = prop.seealso or mw.title.getCurrentTitle().text
-        result = result .. styles.table2 .. styles.h .. "width=50px|Features" .. styles.order .. prop.feature .. styles.h .. "width=60px|See also" .. styles.order .. "[https://web.archive.org/web/megaten.sesshou.com/wiki/index.php/" .. string.gsub(seealso, " ", "_") .. "]\n|}"
-    end
+    --if game == "smtim" then
+        --local seealso = prop.seealso or mw.title.getCurrentTitle().text
+        --result = result .. styles.table2 .. styles.h .. "width=50px|Features" .. styles.order .. prop.feature .. styles.h .. "width=60px|See also" .. styles.order .. "[https://web.archive.org/web/megaten.sesshou.com/wiki/index.php/" .. string.gsub(seealso, " ", "_") .. "]\n|}"
+    --end
     result = Affinity.renderPost(ctx, result)
     result = Drops.renderPersona2Summon(ctx, result)
     if gameg == "smt3" and (prop.recruit ~= "" or prop.obtain ~= "" or prop.evolvef or prop.evolvet) then

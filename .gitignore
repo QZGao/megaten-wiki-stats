@@ -5,3 +5,4 @@ throttle.ctrl
 user-config.py
 user-password.cfg
 pywikibot-*.lwp
+.DS_Store
